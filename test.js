@@ -813,9 +813,8 @@
 // })();
 
 
-import puppeteer from "puppeteer";
 const browser = await puppeteer.launch({
-//   executablePath: '/usr/bin/google-chrome-stable', // or wherever installed
-  headless: "new",
+  executablePath: '/opt/render/.cache/puppeteer/chrome-139.0.7258.66/chrome-linux/chrome',
+  headless: true,
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });

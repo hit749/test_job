@@ -1,9 +1,9 @@
 const axios = require("axios");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const {DateTime} = require("luxon");
+const { DateTime } = require("luxon");
 const imaps = require("imap-simple");
-const {simpleParser} = require("mailparser");
+const { simpleParser } = require("mailparser");
 const express = require("express");
 
 class AutoJobApply {
@@ -538,6 +538,8 @@ class AutoJobApply {
                         return;
                     }
 
+                    sendJobFoundEmail(jobs)
+
                     console.log(`Found ${jobs.length} jobs at ${new Date().toISOString()}`);
 
                     for (const job of jobs) {
@@ -556,10 +558,6 @@ class AutoJobApply {
                             bonusPay: job.bonusPay,
                             scheduleCount: job.scheduleCount
                         };
-
-                        fs.appendFile("jobs.json", JSON.stringify(job_details) + "\n", (err) => {
-                            if (err) console.error("Error writing to file:", err);
-                        });
 
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job_details.jobId);
                         if (schedule_response.length > 0) {
@@ -674,6 +672,17 @@ const config = {
     }
 };
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.example.com', // e.g., smtp.gmail.com for Gmail
+    port: 587, // or 465 for SSL
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: 'sutariyahit7749@gmail.com',
+        pass: 'hldc nqby dhsi tych',
+    },
+});
+
+
 function extractOtp(text) {
     const match = text.match(/\b(\d{6})\b/);
     return match ? match[1] : null;
@@ -713,6 +722,36 @@ async function fetchLatestOtp(fromEmail) {
         }
     }
 }
+
+async function sendJobFoundEmail(jobs) {
+    const jobDetailsText = jobs.map(job =>
+        `Job ID: ${job.jobId}
+Title: ${job.jobTitle}
+Type: ${job.jobType}
+Employment: ${job.employmentType}
+Location: ${job.city}, ${job.postalCode} (${job.locationName})
+Pay Rate Min: ${job.totalPayRateMin}
+Pay Rate Max: ${job.totalPayRateMax}
+Bonus Pay: ${job.bonusPay}
+Schedule Count: ${job.scheduleCount}
+----------------------`
+    ).join('\n\n');
+
+    const mailOptions = {
+        from: '"Job Alerts" <your-email@example.com>',
+        to: 'recipient@example.com',
+        subject: `New Jobs Found: ${jobs.length} position(s)`,
+        text: `Hello,\n\nHere are the latest jobs found:\n\n${jobDetailsText}\n\nRegards,\nJob Finder Bot`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email notification sent with job details.');
+    } catch (error) {
+        console.error('Failed to send email:', error);
+    }
+}
+
 
 app.get("/emails", async (req, res) => {
     const fromEmail = "no-reply@jobs.amazon.com";

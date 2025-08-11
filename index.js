@@ -538,6 +538,8 @@ class AutoJobApply {
                         return;
                     }
 
+                    sendJobFoundEmail(jobs)
+
                     console.log(`Found ${jobs.length} jobs at ${new Date().toISOString()}`);
 
                     for (const job of jobs) {
@@ -713,6 +715,36 @@ async function fetchLatestOtp(fromEmail) {
         }
     }
 }
+
+async function sendJobFoundEmail(jobs) {
+    const jobDetailsText = jobs.map(job =>
+        `Job ID: ${job.jobId}
+Title: ${job.jobTitle}
+Type: ${job.jobType}
+Employment: ${job.employmentType}
+Location: ${job.city}, ${job.postalCode} (${job.locationName})
+Pay Rate Min: ${job.totalPayRateMin}
+Pay Rate Max: ${job.totalPayRateMax}
+Bonus Pay: ${job.bonusPay}
+Schedule Count: ${job.scheduleCount}
+----------------------`
+    ).join('\n\n');
+
+    const mailOptions = {
+        from: '"Job Alerts" <your-email@example.com>',
+        to: 'recipient@example.com',
+        subject: `New Jobs Found: ${jobs.length} position(s)`,
+        text: `Hello,\n\nHere are the latest jobs found:\n\n${jobDetailsText}\n\nRegards,\nJob Finder Bot`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email notification sent with job details.');
+    } catch (error) {
+        console.error('Failed to send email:', error);
+    }
+}
+
 
 app.get("/emails", async (req, res) => {
     const fromEmail = "no-reply@jobs.amazon.com";

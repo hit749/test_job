@@ -814,9 +814,12 @@
 
 import puppeteer from 'puppeteer';
 
-
 const browser = await puppeteer.launch({
-  executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.66/chrome-linux64/chrome',
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--single-process'
+  ],
+  headless: 'new' // or true
 });

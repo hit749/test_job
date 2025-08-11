@@ -4,6 +4,7 @@ import { simpleParser } from "mailparser";
 import axios from 'axios';
 import puppeteer from 'puppeteer';
 import fs from 'fs';
+import glob from 'glob';
 import { DateTime } from 'luxon';
 
 // ================== Express Server for OTP Retrieval ==================
@@ -79,21 +80,45 @@ const server = app.listen(PORT, () => {
 
 async function getChromePath() {
     const possiblePaths = [
+        // Render.com specific paths
         '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
+        '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome',
+        
+        // Standard Linux paths
         '/usr/bin/chromium-browser',
         '/usr/bin/google-chrome',
-        '/opt/google/chrome/chrome'
+        '/usr/bin/chrome',
+        
+        // Alternative paths
+        '/opt/google/chrome/chrome',
+        '/opt/chromium.org/chromium/chrome'
     ];
 
-    for (const path of possiblePaths) {
-        if (path && fs.existsSync(path)) {
-            console.log('Found Chrome at:', path);
-            return path;
+    // Check each possible path
+    for (const pattern of possiblePaths) {
+        try {
+            // Handle paths with wildcards
+            const matches = glob.sync(pattern);
+            if (matches.length > 0) {
+                const chromePath = matches[0];
+                if (fs.existsSync(chromePath)) {
+                    console.log('Found Chrome at:', chromePath);
+                    return chromePath;
+                }
+            }
+            
+            // Check exact path
+            if (!pattern.includes('*') && fs.existsSync(pattern)) {
+                console.log('Found Chrome at:', pattern);
+                return pattern;
+            }
+        } catch (err) {
+            console.log(`Error checking path ${pattern}:`, err.message);
         }
     }
 
     console.log('No Chrome found in standard locations, using Puppeteer bundled version');
-    return null;
+    return null; // Let Puppeteer use its bundled Chromium
 }
 
 

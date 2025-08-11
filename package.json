@@ -6,11 +6,7 @@
     "imap-simple": "^5.1.0",
     "luxon": "^3.7.1",
     "mailparser": "^3.7.4",
-    "postinstall": "node node_modules/puppeteer/install.js",
-    "puppeteer": "^24.16.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node test.js"
+    "pupeteer": "^0.0.1",
+    "puppeteer": "^24.16.1"
   }
 }

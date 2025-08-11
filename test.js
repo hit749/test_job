@@ -818,7 +818,7 @@ import puppeteer from 'puppeteer';
 const chromiumPath = puppeteer.executablePath();
 console.log("chromiumPath :: ", chromiumPath)
 const browser = await puppeteer.launch({
-  executablePath: chromiumPath,
+//   executablePath: chromiumPath,
   headless: true,
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });

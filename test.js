@@ -813,9 +813,16 @@
 // })();
 
 
-import puppeteer from "puppeteer";
-const browser = await puppeteer.launch({
-  executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.66/chrome-linux64/chrome', // or wherever installed
-  headless: "new",
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
+// import puppeteer from "puppeteer";
+// const browser = await puppeteer.launch({
+//   executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.66/chrome-linux64/chrome', // or wherever installed
+//   headless: "new",
+//   args: ['--no-sandbox', '--disable-setuid-sandbox']
+// });
+
+
+import fs from 'fs';
+
+const chromePath = '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.66/chrome-linux64/chrome';
+
+console.log('Does Chrome exist at path?', fs.existsSync(chromePath));

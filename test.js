@@ -85,7 +85,6 @@ async function getChromePath() {
         '/opt/google/chrome/chrome'
     ];
 
-    const fs = require('fs');
     for (const path of possiblePaths) {
         if (path && fs.existsSync(path)) {
             console.log('Found Chrome at:', path);

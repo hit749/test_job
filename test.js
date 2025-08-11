@@ -813,7 +813,7 @@
 // })();
 
 
-const puppeteer = require('puppeteer'); // NOT puppeteer-core
+import puppeteer from 'puppeteer'; // NOT puppeteer-core
 const browser = await puppeteer.launch({
     args: [
       '--no-sandbox',
@@ -821,4 +821,4 @@ const browser = await puppeteer.launch({
       '--disable-dev-shm-usage'
     ],
     headless: 'new'
-  });
+  });   

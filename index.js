@@ -676,6 +676,16 @@ const config = {
     }
 };
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.example.com', // e.g., smtp.gmail.com for Gmail
+    port: 587, // or 465 for SSL
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: 'sutariyahit7749@gmail.com',
+        pass: 'hldc nqby dhsi tych',
+    },
+});
+
 function extractOtp(text) {
     const match = text.match(/\b(\d{6})\b/);
     return match ? match[1] : null;

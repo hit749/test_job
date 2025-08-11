@@ -238,6 +238,29 @@ class AutoJobApply {
     }
 
 
+
+    async getChromePath() {
+        const possiblePaths = [
+            '/opt/render/project/.render/chrome/opt/google/chrome/chrome', // Render's new Chrome path
+            '/usr/bin/chromium-browser', // System Chromium
+            '/usr/bin/google-chrome', // System Chrome
+            '/opt/google/chrome/chrome'
+        ];
+
+        // Check which path exists
+        const fs = require('fs');
+        for (const path of possiblePaths) {
+            if (path && fs.existsSync(path)) {
+                console.log('Found Chrome at:', path);
+                return path;
+            }
+        }
+
+        console.log('No Chrome found in standard locations, using Puppeteer bundled version');
+        return null; // Let Puppeteer use its bundled Chromium
+    }
+
+
     async get_aws_waf_token() {
         try {
             const browser = await puppeteer.launch({
@@ -266,27 +289,6 @@ class AutoJobApply {
             console.log(`ERROR    ::    Function    ::    get_aws_waf_token   ::   ${error}`);
             return false;
         }
-    }
-
-    async getChromePath() {
-        const possiblePaths = [
-            '/opt/render/project/.render/chrome/opt/google/chrome/chrome', // Render's new Chrome path
-            '/usr/bin/chromium-browser', // System Chromium
-            '/usr/bin/google-chrome', // System Chrome
-            '/opt/google/chrome/chrome'
-        ];
-
-        // Check which path exists
-        const fs = require('fs');
-        for (const path of possiblePaths) {
-            if (path && fs.existsSync(path)) {
-                console.log('Found Chrome at:', path);
-                return path;
-            }
-        }
-
-        console.log('No Chrome found in standard locations, using Puppeteer bundled version');
-        return null; // Let Puppeteer use its bundled Chromium
     }
 
     async confirm_amazon_otp(otp, session, csrf_token, aws_waf_token) {

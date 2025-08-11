@@ -815,6 +815,7 @@
 
 import puppeteer from "puppeteer";
 const browser = await puppeteer.launch({
+  executablePath: '/usr/bin/google-chrome-stable', // or wherever installed
   headless: true,
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });

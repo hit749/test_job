@@ -11,11 +11,12 @@ const app = express();
 
 const config = {
     imap: {
-        user: "sutariyah749@gmail.com",        // your gmail address
-        password: "mnij sa qxxl",  // your gmail app password
+        user: "sutariyahit7749@gmail.com",        // your gmail address
+        password: "hldc nqby dhsi tych",  // your gmail app password
         host: "imap.gmail.com",
         port: 993,
         tls: true,
+        tlsOptions: { rejectUnauthorized: false }, // For development only
         authTimeout: 10000,
     },
 };
@@ -346,7 +347,7 @@ class AutoJobApply {
 
     async get_otp() {
         try {
-            const response = await axios.get("http://127.0.0.1:5000/emails");
+            const response = await axios.get("http://localhost:3000/emails");
             if (response.status === 200) {
                 return response.data.otp;
             }
@@ -453,6 +454,9 @@ class AutoJobApply {
             };
 
             const response = await axios.post(url, payload, { headers });
+            if (response.status === 200){
+                console.log(`${DateTime.now()},   ${response.data?.data?.searchJobCardsByLocation?.jobCards?.length} Jobs found.`)
+            }
             if (response.status === 200 && response.data?.data?.searchJobCardsByLocation?.jobCards?.length > 0) {
                 return response.data.data.searchJobCardsByLocation.jobCards;
             }

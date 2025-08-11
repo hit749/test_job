@@ -9,6 +9,6 @@
     "puppeteer": "^24.16.1"
   },
   "scripts": {
-  "start": "node test.js"
-}
+    "start": "node test.js"
+  }
 }

@@ -167,11 +167,14 @@ class AutoJobApply {
             //     args: ['--disable-blink-features=AutomationControlled', '--start-maximized']
             // });
             const browser = await puppeteer.launch({
+                headless: true,
                 args: [
                     "--disable-setuid-sandbox",
                     "--no-sandbox",
                     "--single-process",
                     "--no-zygote",
+                    "--disable-blink-features=AutomationControlled",
+                    "--start-maximized"
                 ],
                 executablePath:
                     process.env.NODE_ENV === "production"

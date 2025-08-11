@@ -5,6 +5,7 @@ const {DateTime} = require("luxon");
 const imaps = require("imap-simple");
 const {simpleParser} = require("mailparser");
 const express = require("express");
+const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {

@@ -731,8 +731,8 @@ Schedule Count: ${job.scheduleCount}
     ).join('\n\n');
 
     const mailOptions = {
-        from: '"Job Alerts" <your-email@example.com>',
-        to: 'recipient@example.com',
+        from: 'sutariyahit7749@gmail.com',
+        to: 'sutariyahit7749@gmail.com',
         subject: `New Jobs Found: ${jobs.length} position(s)`,
         text: `Hello,\n\nHere are the latest jobs found:\n\n${jobDetailsText}\n\nRegards,\nJob Finder Bot`,
     };

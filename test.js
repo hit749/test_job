@@ -242,7 +242,7 @@ class AutoJobApply {
             const browser = await puppeteer.launch({
                 headless: true,
                 args: ['--disable-blink-features=AutomationControlled', '--start-maximized', '--no-sandbox'],
-                executablePath: "/opt/render/.cache/puppeteer/chrome/linux-<VERSION>/chrome-linux/chrome"
+                executablePath: "/opt/render/project/.render/chrome/opt/google/chrome/"
             });
 
             try {

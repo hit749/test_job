@@ -813,12 +813,9 @@
 // })();
 
 
-import puppeteer from 'puppeteer'; // NOT puppeteer-core
+import puppeteer from "puppeteer";
 const browser = await puppeteer.launch({
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage'
-    ],
-    headless: 'new'
-  });   
+  executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.66/chrome-linux64/chrome', // or wherever installed
+  headless: "new",
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});

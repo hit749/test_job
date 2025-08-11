@@ -808,21 +808,10 @@
 // })();
 
 
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 
 const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/google-chrome",
-    headless: true,
-    args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--single-process",
-        "--disable-gpu"
-    ]
+  headless: true,
+  args: ["--no-sandbox", "--disable-setuid-sandbox"]
 });
 
-const page = await browser.newPage();
-await page.goto("https://example.com");
-console.log(await page.title());
-await browser.close();

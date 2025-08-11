@@ -75,6 +75,29 @@ const server = app.listen(PORT, () => {
     console.log(`OTP server running on port ${PORT}`);
 });
 
+
+
+async function getChromePath() {
+    const possiblePaths = [
+        '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+        '/opt/google/chrome/chrome'
+    ];
+
+    const fs = require('fs');
+    for (const path of possiblePaths) {
+        if (path && fs.existsSync(path)) {
+            console.log('Found Chrome at:', path);
+            return path;
+        }
+    }
+
+    console.log('No Chrome found in standard locations, using Puppeteer bundled version');
+    return null;
+}
+
+
 // ================== Amazon Job Application System ==================
 class AutoJobApply {
     constructor() {
@@ -235,29 +258,6 @@ class AutoJobApply {
             console.log(`ERROR    ::    Function    ::    sign_in   ::   ${error}`);
             return false;
         }
-    }
-
-
-
-    async getChromePath() {
-        const possiblePaths = [
-            '/opt/render/project/.render/chrome/opt/google/chrome/chrome', // Render's new Chrome path
-            '/usr/bin/chromium-browser', // System Chromium
-            '/usr/bin/google-chrome', // System Chrome
-            '/opt/google/chrome/chrome'
-        ];
-
-        // Check which path exists
-        const fs = require('fs');
-        for (const path of possiblePaths) {
-            if (path && fs.existsSync(path)) {
-                console.log('Found Chrome at:', path);
-                return path;
-            }
-        }
-
-        console.log('No Chrome found in standard locations, using Puppeteer bundled version');
-        return null; // Let Puppeteer use its bundled Chromium
     }
 
 

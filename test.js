@@ -4,7 +4,7 @@ import { simpleParser } from "mailparser";
 import axios from 'axios';
 import puppeteer from 'puppeteer';
 import fs from 'fs';
-import glob from 'glob';
+import {glob} from 'glob';
 import { DateTime } from 'luxon';
 
 // ================== Express Server for OTP Retrieval ==================

@@ -1,9 +1,9 @@
 const axios = require("axios");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const { DateTime } = require("luxon");
+const {DateTime} = require("luxon");
 const imaps = require("imap-simple");
-const { simpleParser } = require("mailparser");
+const {simpleParser} = require("mailparser");
 const express = require("express");
 const nodemailer = require('nodemailer');
 
@@ -78,7 +78,7 @@ class AutoJobApply {
             const data = {
                 "candidateLoginProp": this.email,
                 "token": csrf_token,
-                "countryName": "Canada"
+                "countryName": "United States"
             };
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
@@ -111,7 +111,7 @@ class AutoJobApply {
                 "user": this.email,
                 "pin": this.pin,
                 "token": csrf_token,
-                "countryName": "Canada"
+                "countryName": "United States"
             };
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
@@ -146,8 +146,8 @@ class AutoJobApply {
                 "pin": this.pin,
                 "user": this.email,
                 "token": csrf_token,
-                "locale": "en-CA",
-                "countryName": "Canada"
+                "locale": "en-US",
+                "countryName": "United States"
             };
             const response = await axios.post(url, data, { headers });
             if (response.status === 200) {
@@ -225,7 +225,7 @@ class AutoJobApply {
                 "session": session,
                 "user": this.email,
                 "token": csrf_token,
-                "countryName": "Canada",
+                "countryName": "United States",
                 "countryCode": "CA"
             };
             const response = await axios.post(url, payload, { headers });
@@ -253,7 +253,7 @@ class AutoJobApply {
                 "Sec-Fetch-Mode": "cors",
                 "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": `https://hiring.amazon.com/application/us/?CS=true&jobId=${jobId}&locale=en-CA&scheduleId=${scheduleId}&ssoEnabled=1`,
+                "Referer": `https://hiring.amazon.com/application/us/?CS=true&jobId=${jobId}&locale=en-US&scheduleId=${scheduleId}&ssoEnabled=1`,
                 "Sec-Fetch-Dest": "empty",
                 "Cookie": `aws-waf-token=${aws_waf_token}`,
                 "bb-ui-version": "bb-ui-v2",
@@ -305,25 +305,25 @@ class AutoJobApply {
                 "Accept-Language": "en-AU,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Sec-Fetch-Mode": "cors",
-                "Origin": "https://hiring.amazon.ca",
+                "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": "https://hiring.amazon.ca/",
+                "Referer": "https://hiring.amazon.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Priority": "u=3, i",
-                "country": "Canada",
+                "country": "United States",
                 "iscanary": "false"
             };
             const payload = {
                 "operationName": "searchJobCardsByLocation",
                 "variables": {
                     "searchJobRequest": {
-                        "locale": "en-CA",
-                        "country": "Canada",
+                        "locale": "en-US",
+                        "country": "United States",
                         "keyWords": "",
                         "equalFilters": [
                             {
                                 "key": "scheduleRequiredLanguage",
-                                "val": "en-CA"
+                                "val": "en-US"
                             }
                         ],
                         "containFilters": [
@@ -404,20 +404,20 @@ class AutoJobApply {
                 "Accept-Language": "en-AU,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Sec-Fetch-Mode": "cors",
-                "Origin": "https://hiring.amazon.ca",
+                "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": "https://hiring.amazon.ca/",
+                "Referer": "https://hiring.amazon.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Priority": "u=3, i",
-                "country": "Canada",
+                "country": "United States",
                 "iscanary": "false"
             };
             const payload = {
                 "operationName": "searchScheduleCards",
                 "variables": {
                     "searchScheduleRequest": {
-                        "locale": "en-CA",
-                        "country": "Canada",
+                        "locale": "en-US",
+                        "country": "United States",
                         "keyWords": "",
                         "equalFilters": [],
                         "containFilters": [
@@ -560,6 +560,10 @@ class AutoJobApply {
                             scheduleCount: job.scheduleCount
                         };
 
+                        fs.appendFile("jobs.json", JSON.stringify(job_details) + "\n", (err) => {
+                            if (err) console.error("Error writing to file:", err);
+                        });
+
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job_details.jobId);
                         if (schedule_response.length > 0) {
                             const latestSchedule = schedule_response[0];
@@ -682,7 +686,6 @@ const transporter = nodemailer.createTransport({
         pass: 'hldc nqby dhsi tych',
     },
 });
-
 
 function extractOtp(text) {
     const match = text.match(/\b(\d{6})\b/);

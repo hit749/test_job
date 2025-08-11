@@ -10,8 +10,7 @@
     "puppeteer": "^24.16.1"
   },
   "scripts": {
-    "postinstall": "node node_modules/puppeteer/install.js",
-    "start": "node test.js",
-    "build": "npx puppeteer browsers install chrome && npm install"
-  }
+  "postinstall": "npx puppeteer browsers install chrome@stable",
+  "start": "node test.js"
+}
 }

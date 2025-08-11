@@ -813,9 +813,16 @@
 // })();
 
 
-import puppeteer from "puppeteer";
-const browser = await puppeteer.launch({
-//   executablePath: '/usr/bin/google-chrome-stable', // or wherever installed
-  headless: "new",
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
+const puppeteer = require('puppeteer'); // NOT puppeteer-core
+
+async function run() {
+  const browser = await puppeteer.launch({
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage'
+    ],
+    headless: 'new'
+  });
+  // ... your code ...
+}

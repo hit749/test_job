@@ -814,9 +814,7 @@
 
 
 const puppeteer = require('puppeteer'); // NOT puppeteer-core
-
-async function run() {
-  const browser = await puppeteer.launch({
+const browser = await puppeteer.launch({
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -824,5 +822,3 @@ async function run() {
     ],
     headless: 'new'
   });
-  // ... your code ...
-}

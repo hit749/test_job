@@ -3,8 +3,7 @@
     "axios": "^1.11.0"
   },
   "scripts": {
-    "start": "node test.js",
-    "build": "echo 'Building...' && npm install --production",
-    "dev": "nodemon test.js"
+    "build": "tsc",
+    "start": "node build/test.js"
   }
 }

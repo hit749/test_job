@@ -288,9 +288,9 @@ class AutoJobApply {
     async get_aws_waf_token() {
         try {
             const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--disable-blink-features=AutomationControlled', '--start-maximized', '--no-sandbox'],
-                executablePath: await getChromePath()
+                headless: "new",
+                args: ['--disable-blink-features=AutomationControlled', '--start-maximized', '--no-sandbox', '--disable-setuid-sandbox'],
+                // executablePath: await getChromePath()
             });
 
             try {

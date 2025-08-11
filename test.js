@@ -813,9 +813,50 @@
 // })();
 
 
-import puppeteer from 'puppeteer';
+const fs = require('fs');
 
-const browser = await puppeteer.launch({
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox'],
-});
+const possiblePaths = [
+  '/usr/bin/chromium-browser',
+  '/usr/bin/google-chrome',
+  '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome',
+  '/opt/google/chrome/chrome'
+];
+
+function findChromium() {
+  for (const path of possiblePaths) {
+    try {
+      // Handle wildcards
+      if (path.includes('*')) {
+        const glob = require('glob');
+        const matches = glob.sync(path);
+        if (matches.length > 0 && fs.existsSync(matches[0])) {
+          return matches[0];
+        }
+      }
+      
+      // Check exact path
+      if (fs.existsSync(path)) {
+        fs.accessSync(path, fs.constants.X_OK); // Check executable permission
+        return path;
+      }
+    } catch (err) {
+      console.log(`Skipping ${path}: ${err.message}`);
+    }
+  }
+  return null;
+}
+
+const chromiumPath = findChromium();
+if (chromiumPath) {
+  console.log(`Found Chromium at: ${chromiumPath}`);
+  module.exports = {
+    chromiumPath,
+    isValid: true
+  };
+} else {
+  console.log('No valid Chromium installation found');
+  module.exports = {
+    chromiumPath: null,
+    isValid: false
+  };
+}

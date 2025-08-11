@@ -241,7 +241,7 @@ class AutoJobApply {
         try {
             const browser = await puppeteer.launch({
                 headless: true,
-                args: ['--disable-blink-features=AutomationControlled', '--start-maximized']
+                args: ['--disable-blink-features=AutomationControlled', '--start-maximized', '--no-sandbox']
             });
 
             try {

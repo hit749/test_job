@@ -6,11 +6,9 @@
     "imap-simple": "^5.1.0",
     "luxon": "^3.7.1",
     "mailparser": "^3.7.4",
-    "pupeteer": "^0.0.1",
     "puppeteer": "^24.16.1"
   },
   "scripts": {
-  "postinstall": "npx puppeteer browsers install chrome@stable",
   "start": "node test.js"
 }
 }

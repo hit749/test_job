@@ -19,37 +19,12 @@ class AutoJobApply {
         this.stop_process = false;
         this.jobSearchInterval = null;
         this.tokenRefreshInterval = null;
-        this.errorCount = 0;
-        this.maxErrorCount = 5;
-        this.cooldownPeriod = 15 * 60 * 1000;
-        this.isInCooldown = false;
-        this.hasRestartedAfterCooldown = false;
         this.axiosInstance = axios.create({
             timeout: 5000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15'
             }
         });
-        this.transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'sutariyahit7749@gmail.com',
-                pass: 'hldc nqby dhsi tych'
-            }
-        });
-    }
-
-    async sendEmail(subject, text) {
-        try {
-            await this.transporter.sendMail({
-                from: 'sutariyahit7749@gmail.com',
-                to: 'sutariyahit7749@gmail.com',
-                subject: `${subject} - ${DateTime.now().toISO()}`,
-                text: text
-            });
-        } catch (error) {
-            console.error('Error sending email:', error);
-        }
     }
 
     async get_csrf_token() {
@@ -72,12 +47,12 @@ class AutoJobApply {
             if (response.status === 200) {
                 return response.data.token;
             } else {
-                await this.sendEmail('CSRF Token Error', `Status Code: ${response.status}\nData: ${response.data}`);
+                console.log(`Error  ::  Status Code  ::  ${response.status}  ::  ${response.data}`);
                 return false;
             }
         } catch (error) {
-            await this.sendEmail('CSRF Token Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    get_csrf_token   ::   ${error}`);
             return false;
         }
     }
@@ -108,8 +83,8 @@ class AutoJobApply {
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
         } catch (error) {
-            await this.sendEmail('Sign In First API Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    sign_in_first_api   ::   ${error}`);
             return false;
         }
     }
@@ -141,8 +116,8 @@ class AutoJobApply {
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
         } catch (error) {
-            await this.sendEmail('Sign In Second API Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    sign_in_second_api   ::   ${error}`);
             return false;
         }
     }
@@ -180,8 +155,8 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('Sign In Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    sign_in   ::   ${error}`);
             return false;
         }
     }
@@ -219,8 +194,8 @@ class AutoJobApply {
                 await browser.close();
             }
         } catch (error) {
-            await this.sendEmail('AWS WAF Token Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    get_aws_waf_token   ::   ${error}`);
             return false;
         }
     }
@@ -259,8 +234,8 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('OTP Confirmation Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    confirm_amazon_otp   ::   ${error}`);
             return false;
         }
     }
@@ -292,14 +267,10 @@ class AutoJobApply {
                 "activeApplicationCheckEnabled": true
             };
             const response = await axios.post(url, payload, { headers });
-            if (response.status === 200) {
-                await this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`);
-                return true;
-            }
-            return false;
+            return response.status === 200;
         } catch (error) {
-            await this.sendEmail('Job Application Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    create_application   ::   ${error}`);
             return false;
         }
     }
@@ -312,8 +283,8 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('OTP Retrieval Error', error.message);
             this.stop_process = true;
+            console.log(`ERROR    ::    Function    ::    get_otp   ::   ${error}`);
             return false;
         }
     }
@@ -411,12 +382,15 @@ class AutoJobApply {
                 }`
             };
             const response = await axios.post(url, payload, { headers });
+            if (response.status === 200){
+                console.log(`TIME:  ${DateTime.now()}, Total ${response.data?.data?.searchJobCardsByLocation?.jobCards?.length} jobs found}`)
+            }
             if (response.status === 200 && response.data?.data?.searchJobCardsByLocation?.jobCards?.length > 0) {
                 return response.data.data.searchJobCardsByLocation.jobCards;
             }
             return [];
         } catch (error) {
-            await this.sendEmail('Job Search Error', error.message);
+            console.log(`ERROR    ::    Function    ::    search_amazon_jobs   ::   ${error}`);
             return [];
         }
     }
@@ -503,7 +477,7 @@ class AutoJobApply {
             }
             return [];
         } catch (error) {
-            await this.sendEmail('Schedule Search Error', error.message);
+            console.log(`ERROR    ::    Function    ::    search_schedule_cards   ::   ${error}`);
             return [];
         }
     }
@@ -517,12 +491,12 @@ class AutoJobApply {
                 this.aws_waf_token = aws_waf_token;
                 this.session_token = session_token;
                 this.auth_token = auth_token;
-                await this.sendEmail('Tokens Refreshed', 'Tokens were successfully refreshed');
+                console.log("Tokens refreshed successfully");
                 return true;
             }
             return false;
         } catch (error) {
-            await this.sendEmail('Token Refresh Error', error.message);
+            console.log(`ERROR    ::    Function    ::    refreshTokens   ::   ${error}`);
             return false;
         }
     }
@@ -538,34 +512,19 @@ class AutoJobApply {
                 await this.refreshTokens();
             }, 7100000);
         } catch (error) {
-            await this.sendEmail('Token Refresh Start Error', error.message);
+            console.log(`ERROR    ::    Function    ::    startTokenRefresh   ::   ${error}`);
             this.stopProcess();
         }
-    }
-
-    async handleCooldown() {
-        this.isInCooldown = true;
-        this.stopProcess();
-        await this.sendEmail('Process Paused', 'Process paused for 15 minutes due to errors');
-
-        setTimeout(async () => {
-            this.isInCooldown = false;
-            this.hasRestartedAfterCooldown = true;
-            this.errorCount = 0;
-            await this.sendEmail('Process Restarted', 'Process restarted after 15 minute cooldown');
-            this.startTokenRefresh();
-            this.find_jobs_every_300ms();
-        }, this.cooldownPeriod);
     }
 
     async find_jobs_every_300ms() {
         try {
             let lastExecutionTime = 0;
+            let errorCount = 0;
+            const maxErrorCount = 5;
 
             const executeSearch = async () => {
                 try {
-                    if (this.isInCooldown) return;
-
                     const startTime = Date.now();
                     const timeSinceLastCall = startTime - lastExecutionTime;
                     const delayNeeded = Math.max(0, 300 - timeSinceLastCall);
@@ -574,45 +533,55 @@ class AutoJobApply {
                         await new Promise(resolve => setTimeout(resolve, delayNeeded));
                     }
 
-                    if (!this.csrf_token) return;
-
-                    const jobs = await this.search_amazon_jobs(this.csrf_token);
-                    if (jobs.length === 0) {
-                        this.errorCount = 0;
+                    if (!this.csrf_token) {
                         return;
                     }
 
-                    const jobDetails = jobs.map(job => ({
-                        jobId: job.jobId,
-                        jobTitle: job.jobTitle,
-                        jobType: job.jobType,
-                        employmentType: job.employmentType,
-                        city: job.city,
-                        postalCode: job.postalCode,
-                        locationName: job.locationName,
-                        totalPayRateMin: job.totalPayRateMin,
-                        totalPayRateMax: job.totalPayRateMax,
-                        bonusPay: job.bonusPay,
-                        scheduleCount: job.scheduleCount
-                    }));
+                    const jobs = await this.search_amazon_jobs(this.csrf_token);
+                    if (jobs.length === 0) {
+                        return;
+                    }
 
-                    await this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2));
+                    sendJobFoundEmail(jobs)
+
+                    console.log(`Found ${jobs.length} jobs at ${new Date().toISOString()}`);
 
                     for (const job of jobs) {
                         if (this.stop_process) break;
 
-                        const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+                        const job_details = {
+                            jobId: job.jobId,
+                            jobTitle: job.jobTitle,
+                            jobType: job.jobType,
+                            employmentType: job.employmentType,
+                            city: job.city,
+                            postalCode: job.postalCode,
+                            locationName: job.locationName,
+                            totalPayRateMin: job.totalPayRateMin,
+                            totalPayRateMax: job.totalPayRateMax,
+                            bonusPay: job.bonusPay,
+                            scheduleCount: job.scheduleCount
+                        };
+
+                        const schedule_response = await this.search_schedule_cards(this.csrf_token, job_details.jobId);
                         if (schedule_response.length > 0) {
                             const latestSchedule = schedule_response[0];
-                            if (job.jobId && latestSchedule.scheduleId) {
+                            Object.assign(job_details, {
+                                scheduleId: latestSchedule.scheduleId,
+                                firstDayOnSite: latestSchedule.firstDayOnSite,
+                                scheduleText: latestSchedule.scheduleText
+                            });
+
+                            if (job_details.jobId && job_details.scheduleId) {
                                 const applicationSuccess = await this.create_application(
-                                    job.jobId,
-                                    latestSchedule.scheduleId,
+                                    job_details.jobId,
+                                    job_details.scheduleId,
                                     this.aws_waf_token,
                                     this.auth_token
                                 );
 
                                 if (applicationSuccess) {
+                                    console.log("Job Successfully Applied");
                                     this.stopProcess();
                                     return;
                                 }
@@ -620,18 +589,14 @@ class AutoJobApply {
                         }
                     }
 
-                    this.errorCount = 0;
+                    errorCount = 0;
                 } catch (error) {
-                    this.errorCount++;
-                    await this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`);
+                    errorCount++;
+                    console.error(`Error in job search (attempt ${errorCount}):`, error.message);
 
-                    if (this.errorCount >= this.maxErrorCount) {
-                        if (!this.hasRestartedAfterCooldown) {
-                            await this.handleCooldown();
-                        } else {
-                            await this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors');
-                            this.stopProcess();
-                        }
+                    if (errorCount >= maxErrorCount) {
+                        console.error("Max error count reached, stopping...");
+                        this.stopProcess();
                     }
                 } finally {
                     lastExecutionTime = Date.now();
@@ -642,7 +607,7 @@ class AutoJobApply {
             await executeSearch();
             await new Promise(() => { });
         } catch (error) {
-            await this.sendEmail('Fatal Job Search Error', error.message);
+            console.error("Fatal error in job search:", error);
             this.stopProcess();
         }
     }
@@ -651,24 +616,38 @@ class AutoJobApply {
         this.stop_process = true;
         if (this.jobSearchInterval) clearInterval(this.jobSearchInterval);
         if (this.tokenRefreshInterval) clearInterval(this.tokenRefreshInterval);
+        console.log("Process stopped");
     }
 
     async main() {
         try {
             const aws_waf_token = await this.get_aws_waf_token();
+            console.log("aws_waf_token   ::   ", aws_waf_token);
+
             const csrf_token = await this.get_csrf_token();
+            console.log("csrf_token   ::   ", csrf_token);
 
             if (csrf_token && aws_waf_token) {
                 const first_step_verification = await this.sign_in_first_api(csrf_token);
                 if (first_step_verification) {
+                    console.log("First step verification successful");
+
                     const second_step_verification = await this.sign_in_second_api(csrf_token);
                     if (second_step_verification) {
+                        console.log("Second step verification successful");
+
                         const session_token = await this.sign_in(csrf_token, aws_waf_token);
                         if (session_token) {
+                            console.log("Sign in successful");
+                            console.log("session_token   ::   ", session_token);
+
                             await new Promise(resolve => setTimeout(resolve, 5000));
+
                             const otp = await this.get_otp();
+                            console.log("otp   ::   ", otp);
                             if (otp) {
                                 const auth_token = await this.confirm_amazon_otp(otp, session_token, csrf_token, aws_waf_token);
+                                console.log("auth token   ::   ", auth_token);
                                 return { csrf_token, aws_waf_token, session_token, auth_token };
                             }
                         }
@@ -676,7 +655,7 @@ class AutoJobApply {
                 }
             }
         } catch (error) {
-            await this.sendEmail('Main Process Error', error.message);
+            console.log(`ERROR    ::    Function    ::    main   ::   ${error}`);
         }
         return { csrf_token: null, aws_waf_token: null, session_token: null, auth_token: null };
     }
@@ -696,6 +675,17 @@ const config = {
         authTimeout: 10000
     }
 };
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com', // e.g., smtp.gmail.com for Gmail
+    port: 587, // or 465 for SSL
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: 'sutariyahit7749@gmail.com',
+        pass: 'hldc nqby dhsi tych',
+    },
+});
+
 
 function extractOtp(text) {
     const match = text.match(/\b(\d{6})\b/);
@@ -737,6 +727,36 @@ async function fetchLatestOtp(fromEmail) {
     }
 }
 
+async function sendJobFoundEmail(jobs) {
+    const jobDetailsText = jobs.map(job =>
+        `Job ID: ${job.jobId}
+Title: ${job.jobTitle}
+Type: ${job.jobType}
+Employment: ${job.employmentType}
+Location: ${job.city}, ${job.postalCode} (${job.locationName})
+Pay Rate Min: ${job.totalPayRateMin}
+Pay Rate Max: ${job.totalPayRateMax}
+Bonus Pay: ${job.bonusPay}
+Schedule Count: ${job.scheduleCount}
+----------------------`
+    ).join('\n\n');
+
+    const mailOptions = {
+        from: 'sutariyahit7749@gmail.com',
+        to: 'sutariyahit7749@gmail.com',
+        subject: `New Jobs Found: ${jobs.length} position(s)`,
+        text: `Hello,\n\nHere are the latest jobs found:\n\n${jobDetailsText}\n\nRegards,\nJob Finder Bot`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email notification sent with job details.');
+    } catch (error) {
+        console.error('Failed to send email:', error);
+    }
+}
+
+
 app.get("/emails", async (req, res) => {
     const fromEmail = "no-reply@jobs.amazon.com";
     if (!config.imap.user || !config.imap.password) {
@@ -749,11 +769,13 @@ app.get("/emails", async (req, res) => {
 const obj = new AutoJobApply();
 
 process.on('SIGINT', () => {
+    console.log("\nGracefully shutting down...");
     obj.stopProcess();
     process.exit();
 });
 
 process.on('SIGTERM', () => {
+    console.log("\nTermination signal received...");
     obj.stopProcess();
     process.exit();
 });
@@ -763,7 +785,7 @@ process.on('SIGTERM', () => {
         obj.startTokenRefresh();
         await obj.find_jobs_every_300ms();
     } catch (error) {
-        await obj.sendEmail('Initialization Error', error.message);
+        console.error("Initialization error:", error);
         obj.stopProcess();
     }
 })();

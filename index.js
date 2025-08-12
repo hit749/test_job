@@ -382,6 +382,9 @@ class AutoJobApply {
                 }`
             };
             const response = await axios.post(url, payload, { headers });
+            if (response.status === 200){
+                console.log(`TIME:  ${DateTime.now()}, Total ${response.data?.data?.searchJobCardsByLocation?.jobCards?.length} jobs found}`)
+            }
             if (response.status === 200 && response.data?.data?.searchJobCardsByLocation?.jobCards?.length > 0) {
                 return response.data.data.searchJobCardsByLocation.jobCards;
             }

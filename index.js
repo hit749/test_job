@@ -267,6 +267,7 @@ class AutoJobApply {
 
     async create_application(jobId, scheduleId, aws_waf_token, auth_token) {
         try {
+            console.log(`jobId: ${jobId}, scheduleId: ${scheduleId}, aws_waf_token: ${aws_waf_token}, auth_token: ${auth_token}`)
             const url = "https://hiring.amazon.com/application/api/candidate-application/ds/create-application/";
             const headers = {
                 "Content-Type": "application/json;charset=utf-8",
@@ -292,6 +293,7 @@ class AutoJobApply {
                 "activeApplicationCheckEnabled": true
             };
             const response = await axios.post(url, payload, { headers });
+            console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response_data: ${JSON.stringify(response, null, 2)}`)
             if (response.status === 200) {
                 await this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`);
                 return true;
@@ -412,6 +414,7 @@ class AutoJobApply {
             };
             const response = await axios.post(url, payload, { headers });
             if (response.status === 200 && response.data?.data?.searchJobCardsByLocation?.jobCards?.length > 0) {
+                console.log(`Total ${response.data?.data?.searchJobCardsByLocation?.jobCards?.length} Jobs Found.`)
                 return response.data.data.searchJobCardsByLocation.jobCards;
             }
             return [];
@@ -498,7 +501,9 @@ class AutoJobApply {
                 }`
             };
             const response = await axios.post(url, payload, { headers });
+            console.log(`Function: search_schedule_cards,  Job Id: ${job_id}, response_status: ${response.status}, response_data: ${JSON.stringify(response, null, 2)}`)
             if (response.status === 200 && response.data?.data?.searchScheduleCards?.scheduleCards?.length > 0) {
+                console.log(`Total ${response.data?.data?.searchScheduleCards?.scheduleCards?.length} Schedule Cards Found`)
                 return response.data.data.searchScheduleCards.scheduleCards;
             }
             return [];
@@ -595,13 +600,14 @@ class AutoJobApply {
                         bonusPay: job.bonusPay,
                         scheduleCount: job.scheduleCount
                     }));
-
+                    console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
                     await this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2));
 
                     for (const job of jobs) {
                         if (this.stop_process) break;
 
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+                        console.log(`Schedele response length: ${schedule_response.length}`)
                         if (schedule_response.length > 0) {
                             const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
@@ -659,17 +665,31 @@ class AutoJobApply {
             const csrf_token = await this.get_csrf_token();
 
             if (csrf_token && aws_waf_token) {
+                console.log("csrf_token and aws_waf_token successfully found")
                 const first_step_verification = await this.sign_in_first_api(csrf_token);
                 if (first_step_verification) {
+                    console.log("First step of verification successfully complete")
                     const second_step_verification = await this.sign_in_second_api(csrf_token);
                     if (second_step_verification) {
+                        console.log("Second step of verification successfully complete")
                         const session_token = await this.sign_in(csrf_token, aws_waf_token);
                         if (session_token) {
+                            console.log("Session token successfully retrived")
                             await new Promise(resolve => setTimeout(resolve, 5000));
                             const otp = await this.get_otp();
                             if (otp) {
+                                console.log("OTP token successfully retrived")
                                 const auth_token = await this.confirm_amazon_otp(otp, session_token, csrf_token, aws_waf_token);
-                                return { csrf_token, aws_waf_token, session_token, auth_token };
+                                if (auth_token) {
+                                    console.log("Auth token successfully retrived")
+                                    return { csrf_token, aws_waf_token, session_token, auth_token };
+                                } else {
+                                    console.log("Auth token successfully not retrived")
+                                    console.log(`csrf_token: ${csrf_token}, aws_waf_token: ${aws_waf_token}, session_token: ${session_token}, auth_token: ${auth_token}`)
+                                    return {
+                                        csrf_token: null, aws_waf_token: null, session_token: null, auth_token: null
+                                    }
+                                }
                             }
                         }
                     }

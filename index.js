@@ -41,14 +41,24 @@ class AutoJobApply {
 
     async sendEmail(subject, text) {
         try {
-            await this.transporter.sendMail({
+            // Add a timeout to prevent hanging indefinitely (e.g., 10s max)
+            const emailPromise = this.transporter.sendMail({
                 from: 'sutariyahit7749@gmail.com',
                 to: 'sutariyahit7749@gmail.com',
                 subject: `${subject} - ${DateTime.now().toISO()}`,
                 text: text
             });
+
+            // Fail fast if email takes too long (optional)
+            await Promise.race([
+                emailPromise,
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Email timeout')), 10_000)
+                )
+            ]);
         } catch (error) {
             console.error('Error sending email:', error);
+            // Optional: Log to a monitoring service (e.g., Sentry)
         }
     }
 
@@ -72,11 +82,11 @@ class AutoJobApply {
             if (response.status === 200) {
                 return response.data.token;
             } else {
-                await this.sendEmail('CSRF Token Error', `Status Code: ${response.status}\nData: ${response.data}`);
+                this.sendEmail('CSRF Token Error', `Status Code: ${response.status}\nData: ${response.data}`).catch(console.error);
                 return false;
             }
         } catch (error) {
-            await this.sendEmail('CSRF Token Error', error.message);
+            this.sendEmail('CSRF Token Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -108,7 +118,7 @@ class AutoJobApply {
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
         } catch (error) {
-            await this.sendEmail('Sign In First API Error', error.message);
+            this.sendEmail('Sign In First API Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -141,7 +151,7 @@ class AutoJobApply {
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
         } catch (error) {
-            await this.sendEmail('Sign In Second API Error', error.message);
+            this.sendEmail('Sign In Second API Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -180,7 +190,7 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('Sign In Error', error.message);
+            this.sendEmail('Sign In Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -219,7 +229,7 @@ class AutoJobApply {
                 await browser.close();
             }
         } catch (error) {
-            await this.sendEmail('AWS WAF Token Error', error.message);
+            this.sendEmail('AWS WAF Token Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -259,7 +269,7 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('OTP Confirmation Error', error.message);
+            this.sendEmail('OTP Confirmation Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -295,12 +305,12 @@ class AutoJobApply {
             const response = await axios.post(url, payload, { headers });
             console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response_data: ${JSON.stringify(response, null, 2)}`)
             if (response.status === 200) {
-                await this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`);
+                this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`).catch(console.error);
                 return true;
             }
             return false;
         } catch (error) {
-            await this.sendEmail('Job Application Error', error.message);
+            this.sendEmail('Job Application Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -314,7 +324,7 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
-            await this.sendEmail('OTP Retrieval Error', error.message);
+            this.sendEmail('OTP Retrieval Error', error.message).catch(console.error);
             this.stop_process = true;
             return false;
         }
@@ -419,7 +429,7 @@ class AutoJobApply {
             }
             return [];
         } catch (error) {
-            await this.sendEmail('Job Search Error', error.message);
+            this.sendEmail('Job Search Error', error.message).catch(console.error);
             return [];
         }
     }
@@ -508,7 +518,7 @@ class AutoJobApply {
             }
             return [];
         } catch (error) {
-            await this.sendEmail('Schedule Search Error', error.message);
+            this.sendEmail('Schedule Search Error', error.message).catch(console.error);
             return [];
         }
     }
@@ -522,12 +532,12 @@ class AutoJobApply {
                 this.aws_waf_token = aws_waf_token;
                 this.session_token = session_token;
                 this.auth_token = auth_token;
-                await this.sendEmail('Tokens Refreshed', 'Tokens were successfully refreshed');
+                this.sendEmail('Tokens Refreshed', 'Tokens were successfully refreshed').catch(console.error);
                 return true;
             }
             return false;
         } catch (error) {
-            await this.sendEmail('Token Refresh Error', error.message);
+            this.sendEmail('Token Refresh Error', error.message).catch(console.error);
             return false;
         }
     }
@@ -543,7 +553,7 @@ class AutoJobApply {
                 await this.refreshTokens();
             }, 7100000);
         } catch (error) {
-            await this.sendEmail('Token Refresh Start Error', error.message);
+            this.sendEmail('Token Refresh Start Error', error.message).catch(console.error);
             this.stopProcess();
         }
     }
@@ -551,13 +561,13 @@ class AutoJobApply {
     async handleCooldown() {
         this.isInCooldown = true;
         this.stopProcess();
-        await this.sendEmail('Process Paused', 'Process paused for 15 minutes due to errors');
+        this.sendEmail('Process Paused', 'Process paused for 15 minutes due to errors').catch(console.error);
 
         setTimeout(async () => {
             this.isInCooldown = false;
             this.hasRestartedAfterCooldown = true;
             this.errorCount = 0;
-            await this.sendEmail('Process Restarted', 'Process restarted after 15 minute cooldown');
+            this.sendEmail('Process Restarted', 'Process restarted after 15 minute cooldown').catch(console.error);
             this.startTokenRefresh();
             this.find_jobs_every_300ms();
         }, this.cooldownPeriod);
@@ -601,7 +611,7 @@ class AutoJobApply {
                         scheduleCount: job.scheduleCount
                     }));
                     console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
-                    await this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2));
+                    this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error).catch(console.error);
 
                     for (const job of jobs) {
                         if (this.stop_process) break;
@@ -629,13 +639,13 @@ class AutoJobApply {
                     this.errorCount = 0;
                 } catch (error) {
                     this.errorCount++;
-                    await this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`);
+                    this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`).catch(console.error);
 
                     if (this.errorCount >= this.maxErrorCount) {
                         if (!this.hasRestartedAfterCooldown) {
                             await this.handleCooldown();
                         } else {
-                            await this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors');
+                            this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors').catch(console.error);
                             this.stopProcess();
                         }
                     }
@@ -648,7 +658,7 @@ class AutoJobApply {
             await executeSearch();
             await new Promise(() => { });
         } catch (error) {
-            await this.sendEmail('Fatal Job Search Error', error.message);
+            this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
             this.stopProcess();
         }
     }
@@ -696,7 +706,7 @@ class AutoJobApply {
                 }
             }
         } catch (error) {
-            await this.sendEmail('Main Process Error', error.message);
+            this.sendEmail('Main Process Error', error.message).catch(console.error);
         }
         return { csrf_token: null, aws_waf_token: null, session_token: null, auth_token: null };
     }
@@ -783,7 +793,7 @@ process.on('SIGTERM', () => {
         obj.startTokenRefresh();
         await obj.find_jobs_every_300ms();
     } catch (error) {
-        await obj.sendEmail('Initialization Error', error.message);
+        await obj.sendEmail('Initialization Error', error.message).catch(console.error);
         obj.stopProcess();
     }
 })();

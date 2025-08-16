@@ -303,7 +303,7 @@ class AutoJobApply {
                 "activeApplicationCheckEnabled": true
             };
             const response = await axios.post(url, payload, { headers });
-            console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response_data: ${JSON.stringify(response, null, 2)}`)
+            console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200) {
                 this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`).catch(console.error);
                 return true;
@@ -511,7 +511,7 @@ class AutoJobApply {
                 }`
             };
             const response = await axios.post(url, payload, { headers });
-            console.log(`Function: search_schedule_cards,  Job Id: ${job_id}, response_status: ${response.status}, response_data: ${JSON.stringify(response, null, 2)}`)
+            console.log(`Function: search_schedule_cards,  Job Id: ${job_id}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200 && response.data?.data?.searchScheduleCards?.scheduleCards?.length > 0) {
                 console.log(`Total ${response.data?.data?.searchScheduleCards?.scheduleCards?.length} Schedule Cards Found`)
                 return response.data.data.searchScheduleCards.scheduleCards;
@@ -575,19 +575,9 @@ class AutoJobApply {
 
     async find_jobs_every_300ms() {
         try {
-            let lastExecutionTime = 0;
-
             const executeSearch = async () => {
                 try {
                     if (this.isInCooldown) return;
-
-                    const startTime = Date.now();
-                    const timeSinceLastCall = startTime - lastExecutionTime;
-                    const delayNeeded = Math.max(0, 300 - timeSinceLastCall);
-
-                    if (delayNeeded > 0) {
-                        await new Promise(resolve => setTimeout(resolve, delayNeeded));
-                    }
 
                     if (!this.csrf_token) return;
 
@@ -611,13 +601,13 @@ class AutoJobApply {
                         scheduleCount: job.scheduleCount
                     }));
                     console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
-                    this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error).catch(console.error);
+                    this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
 
                     for (const job of jobs) {
                         if (this.stop_process) break;
 
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
-                        console.log(`Schedele response length: ${schedule_response.length}`)
+                        console.log(`Schedule response length: ${schedule_response.length}`)
                         if (schedule_response.length > 0) {
                             const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
@@ -649,19 +639,109 @@ class AutoJobApply {
                             this.stopProcess();
                         }
                     }
-                } finally {
-                    lastExecutionTime = Date.now();
                 }
             };
 
-            this.jobSearchInterval = setInterval(executeSearch, 300);
+            // Run immediately and then every 10 seconds
             await executeSearch();
-            await new Promise(() => { });
+            this.jobSearchInterval = setInterval(executeSearch, 10000);
+            
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
             this.stopProcess();
         }
     }
+
+    // async find_jobs_every_300ms() {
+    //     try {
+    //         let lastExecutionTime = 0;
+
+    //         const executeSearch = async () => {
+    //             try {
+    //                 if (this.isInCooldown) return;
+
+    //                 const startTime = Date.now();
+    //                 const timeSinceLastCall = startTime - lastExecutionTime;
+    //                 const delayNeeded = Math.max(0, 300 - timeSinceLastCall);
+
+    //                 if (delayNeeded > 0) {
+    //                     await new Promise(resolve => setTimeout(resolve, delayNeeded));
+    //                 }
+
+    //                 if (!this.csrf_token) return;
+
+    //                 const jobs = await this.search_amazon_jobs(this.csrf_token);
+    //                 if (jobs.length === 0) {
+    //                     this.errorCount = 0;
+    //                     return;
+    //                 }
+
+    //                 const jobDetails = jobs.map(job => ({
+    //                     jobId: job.jobId,
+    //                     jobTitle: job.jobTitle,
+    //                     jobType: job.jobType,
+    //                     employmentType: job.employmentType,
+    //                     city: job.city,
+    //                     postalCode: job.postalCode,
+    //                     locationName: job.locationName,
+    //                     totalPayRateMin: job.totalPayRateMin,
+    //                     totalPayRateMax: job.totalPayRateMax,
+    //                     bonusPay: job.bonusPay,
+    //                     scheduleCount: job.scheduleCount
+    //                 }));
+    //                 console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
+    //                 this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error).catch(console.error);
+
+    //                 for (const job of jobs) {
+    //                     if (this.stop_process) break;
+
+    //                     const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+    //                     console.log(`Schedele response length: ${schedule_response.length}`)
+    //                     if (schedule_response.length > 0) {
+    //                         const latestSchedule = schedule_response[0];
+    //                         if (job.jobId && latestSchedule.scheduleId) {
+    //                             const applicationSuccess = await this.create_application(
+    //                                 job.jobId,
+    //                                 latestSchedule.scheduleId,
+    //                                 this.aws_waf_token,
+    //                                 this.auth_token
+    //                             );
+
+    //                             if (applicationSuccess) {
+    //                                 this.stopProcess();
+    //                                 return;
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+
+    //                 this.errorCount = 0;
+    //             } catch (error) {
+    //                 this.errorCount++;
+    //                 this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`).catch(console.error);
+
+    //                 if (this.errorCount >= this.maxErrorCount) {
+    //                     if (!this.hasRestartedAfterCooldown) {
+    //                         await this.handleCooldown();
+    //                     } else {
+    //                         this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors').catch(console.error);
+    //                         this.stopProcess();
+    //                     }
+    //                 }
+    //             } finally {
+    //                 lastExecutionTime = Date.now();
+    //             }
+    //         };
+
+    //         this.jobSearchInterval = setInterval(executeSearch, 300);
+    //         await executeSearch();
+    //         await new Promise(() => { });
+    //     } catch (error) {
+    //         this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
+    //         this.stopProcess();
+    //     }
+    // }
+
 
     stopProcess() {
         this.stop_process = true;
@@ -790,7 +870,7 @@ process.on('SIGTERM', () => {
 
 (async () => {
     try {
-        obj.startTokenRefresh();
+        await obj.startTokenRefresh();
         await obj.find_jobs_every_300ms();
     } catch (error) {
         await obj.sendEmail('Initialization Error', error.message).catch(console.error);

@@ -113,7 +113,7 @@ class AutoJobApply {
             const data = {
                 "candidateLoginProp": this.email,
                 "token": csrf_token,
-                "countryName": "United States"
+                "countryName": "Canada"
             };
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
@@ -146,7 +146,7 @@ class AutoJobApply {
                 "user": this.email,
                 "pin": this.pin,
                 "token": csrf_token,
-                "countryName": "United States"
+                "countryName": "Canada"
             };
             const response = await axios.post(url, data, { headers });
             return response.status === 200;
@@ -181,8 +181,8 @@ class AutoJobApply {
                 "pin": this.pin,
                 "user": this.email,
                 "token": csrf_token,
-                "locale": "en-US",
-                "countryName": "United States"
+                "locale": "en-CA",
+                "countryName": "Canada"
             };
             const response = await axios.post(url, data, { headers });
             if (response.status === 200) {
@@ -260,7 +260,7 @@ class AutoJobApply {
                 "session": session,
                 "user": this.email,
                 "token": csrf_token,
-                "countryName": "United States",
+                "countryName": "Canada",
                 "countryCode": "CA"
             };
             const response = await axios.post(url, payload, { headers });
@@ -289,7 +289,7 @@ class AutoJobApply {
                 "Sec-Fetch-Mode": "cors",
                 "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": `https://hiring.amazon.com/application/us/?CS=true&jobId=${jobId}&locale=en-US&scheduleId=${scheduleId}&ssoEnabled=1`,
+                "Referer": `https://hiring.amazon.com/application/us/?CS=true&jobId=${jobId}&locale=en-CA&scheduleId=${scheduleId}&ssoEnabled=1`,
                 "Sec-Fetch-Dest": "empty",
                 "Cookie": `aws-waf-token=${aws_waf_token}`,
                 "bb-ui-version": "bb-ui-v2",
@@ -305,12 +305,18 @@ class AutoJobApply {
             const response = await axios.post(url, payload, { headers });
             console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200) {
-                this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`).catch(console.error);
+                await this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`);
                 return true;
+            } else {
+                throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
             }
-            return false;
         } catch (error) {
-            this.sendEmail('Job Application Error', error.message).catch(console.error);
+            const errorMessage = error.response
+                ? `Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
+                : error.message;
+
+            console.error('Application failed:', errorMessage);
+            await this.sendEmail('Job Application Error', errorMessage);
             this.stop_process = true;
             return false;
         }
@@ -346,25 +352,25 @@ class AutoJobApply {
                 "Accept-Language": "en-AU,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Sec-Fetch-Mode": "cors",
-                "Origin": "https://hiring.amazon.com",
+                "Origin": "https://hiring.amazon.ca",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": "https://hiring.amazon.com/",
+                "Referer": "https://hiring.amazon.ca/",
                 "Sec-Fetch-Dest": "empty",
                 "Priority": "u=3, i",
-                "country": "United States",
+                "country": "Canada",
                 "iscanary": "false"
             };
             const payload = {
                 "operationName": "searchJobCardsByLocation",
                 "variables": {
                     "searchJobRequest": {
-                        "locale": "en-US",
-                        "country": "United States",
+                        "locale": "en-CA",
+                        "country": "Canada",
                         "keyWords": "",
                         "equalFilters": [
                             {
                                 "key": "scheduleRequiredLanguage",
-                                "val": "en-US"
+                                "val": "en-CA"
                             }
                         ],
                         "containFilters": [
@@ -446,20 +452,20 @@ class AutoJobApply {
                 "Accept-Language": "en-AU,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Sec-Fetch-Mode": "cors",
-                "Origin": "https://hiring.amazon.com",
+                "Origin": "https://hiring.amazon.ca",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": "https://hiring.amazon.com/",
+                "Referer": "https://hiring.amazon.ca/",
                 "Sec-Fetch-Dest": "empty",
                 "Priority": "u=3, i",
-                "country": "United States",
+                "country": "Canada",
                 "iscanary": "false"
             };
             const payload = {
                 "operationName": "searchScheduleCards",
                 "variables": {
                     "searchScheduleRequest": {
-                        "locale": "en-US",
-                        "country": "United States",
+                        "locale": "en-CA",
+                        "country": "Canada",
                         "keyWords": "",
                         "equalFilters": [],
                         "containFilters": [
@@ -645,7 +651,7 @@ class AutoJobApply {
             // Run immediately and then every 10 seconds
             await executeSearch();
             this.jobSearchInterval = setInterval(executeSearch, 10000);
-            
+
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
             this.stopProcess();

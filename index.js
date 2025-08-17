@@ -311,12 +311,23 @@ class AutoJobApply {
                 throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
             }
         } catch (error) {
-            const errorMessage = error.response
-                ? `Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
-                : error.message;
+            console.log(error.response)
+            if (error.response) {
+                // API returned 4xx/5xx (HTTP error)
+                console.error("API Error:", {
+                    status: error.response.status,
+                    data: error.response.data,  // This often contains the reason for 400
+                    headers: error.response.headers,
+                });
+            } else if (error.request) {
+                // Request was made but no response (network error)
+                console.error("Network Error:", error.message);
+            } else {
+                // Code-level error (e.g., undefined variable)
+                console.error("Runtime Error:", error.message);
+            }
 
-            console.error('Application failed:', errorMessage);
-            await this.sendEmail('Job Application Error', errorMessage);
+            this.sendEmail('Job Application Failed', JSON.stringify(error.response?.data || error.message));
             this.stop_process = true;
             return false;
         }

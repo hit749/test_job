@@ -628,7 +628,7 @@ class AutoJobApply {
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
                         console.log(`Schedule response length: ${schedule_response.length}`)
                         if (schedule_response.length > 0) {
-                            const latestSchedule = schedule_response[-1];
+                            const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
                                 const applicationSuccess = await this.create_application(
                                     job.jobId,

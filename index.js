@@ -302,6 +302,7 @@ class AutoJobApply {
                 "candidateId": this.candidateId,
                 "activeApplicationCheckEnabled": true
             };
+            console.log(payload)
             const response = await axios.post(url, payload, { headers });
             console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200) {
@@ -528,9 +529,9 @@ class AutoJobApply {
                 }`
             };
             const response = await axios.post(url, payload, { headers });
-            console.log(`Function: search_schedule_cards,  Job Id: ${job_id}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
+            // console.log(`Function: search_schedule_cards,  Job Id: ${job_id}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200 && response.data?.data?.searchScheduleCards?.scheduleCards?.length > 0) {
-                console.log(`Total ${response.data?.data?.searchScheduleCards?.scheduleCards?.length} Schedule Cards Found`)
+                // console.log(`Total ${response.data?.data?.searchScheduleCards?.scheduleCards?.length} Schedule Cards Found`)
                 return response.data.data.searchScheduleCards.scheduleCards;
             }
             return [];
@@ -606,44 +607,45 @@ class AutoJobApply {
                         return;
                     }
 
-                    const jobDetails = jobs.map(job => ({
-                        jobId: job.jobId,
-                        jobTitle: job.jobTitle,
-                        jobType: job.jobType,
-                        employmentType: job.employmentType,
-                        city: job.city,
-                        postalCode: job.postalCode,
-                        locationName: job.locationName,
-                        totalPayRateMin: job.totalPayRateMin,
-                        totalPayRateMax: job.totalPayRateMax,
-                        bonusPay: job.bonusPay,
-                        scheduleCount: job.scheduleCount
-                    }));
-                    console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
-                    this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
+                    // const jobDetails = jobs.map(job => ({
+                    //     jobId: job.jobId,
+                    //     jobTitle: job.jobTitle,
+                    //     jobType: job.jobType,
+                    //     employmentType: job.employmentType,
+                    //     city: job.city,
+                    //     postalCode: job.postalCode,
+                    //     locationName: job.locationName,
+                    //     totalPayRateMin: job.totalPayRateMin,
+                    //     totalPayRateMax: job.totalPayRateMax,
+                    //     bonusPay: job.bonusPay,
+                    //     scheduleCount: job.scheduleCount
+                    // }));
+                    // console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
+                    // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
 
-                    for (const job of jobs) {
-                        if (this.stop_process) break;
+                    const job = jobs[0]
+                    // for (const job of jobs) {
+                    if (this.stop_process) return;
 
-                        const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
-                        console.log(`Schedule response length: ${schedule_response.length}`)
-                        if (schedule_response.length > 0) {
-                            const latestSchedule = schedule_response[0];
-                            if (job.jobId && latestSchedule.scheduleId) {
-                                const applicationSuccess = await this.create_application(
-                                    job.jobId,
-                                    latestSchedule.scheduleId,
-                                    this.aws_waf_token,
-                                    this.auth_token
-                                );
+                    const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+                    // console.log(`Schedule response length: ${schedule_response.length}`)
+                    if (schedule_response.length > 0) {
+                        const latestSchedule = schedule_response[0];
+                        if (job.jobId && latestSchedule.scheduleId) {
+                            const applicationSuccess = await this.create_application(
+                                job.jobId,
+                                latestSchedule.scheduleId,
+                                this.aws_waf_token,
+                                this.auth_token
+                            );
 
-                                if (applicationSuccess) {
-                                    this.stopProcess();
-                                    return;
-                                }
+                            if (applicationSuccess) {
+                                this.stopProcess();
+                                return;
                             }
                         }
                     }
+                    // }
 
                     this.errorCount = 0;
                 } catch (error) {

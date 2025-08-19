@@ -593,6 +593,7 @@ class AutoJobApply {
     async find_jobs_every_300ms() {
         try {
             const executeSearch = async () => {
+                console.log(`time: ${DateTime.now()}`)
                 try {
                     if (this.stop_process) return;
 
@@ -663,7 +664,7 @@ class AutoJobApply {
 
             // Run immediately and then every 10 seconds
             await executeSearch();
-            this.jobSearchInterval = setInterval(executeSearch, 10000);
+            this.jobSearchInterval = setInterval(executeSearch, 100);
 
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);

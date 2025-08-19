@@ -132,7 +132,7 @@ class AutoJobApply {
                 'Access-Control-Allow-Origin': '*',
                 'Accept': 'application/json, text/plain, */*',
                 'Sec-Fetch-Site': 'same-origin',
-                'Accept-Language': 'en-GB,en;q=0.9',
+                'Accept-Language': 'en-AU,en;q=0.9',
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Sec-Fetch-Mode': 'cors',
                 'Origin': 'https://auth.hiring.amazon.com',
@@ -159,7 +159,7 @@ class AutoJobApply {
 
     async sign_in(csrf_token, aws_waf_token) {
         try {
-            const url = 'https://auth.hiring.amazon.com/api/authentication/sign-in?countryCode=US';
+            const url = 'https://auth.hiring.amazon.com/api/authentication/sign-in?countryCode=CA';
             const headers = {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',

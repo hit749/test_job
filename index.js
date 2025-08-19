@@ -159,7 +159,7 @@ class AutoJobApply {
 
     async sign_in(csrf_token, aws_waf_token) {
         try {
-            const url = 'https://auth.hiring.amazon.com/api/authentication/sign-in?countryCode=CA';
+            const url = 'https://auth.hiring.amazon.com/api/authentication/sign-in?countryCode=US';
             const headers = {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',

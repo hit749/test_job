@@ -593,7 +593,6 @@ class AutoJobApply {
     async find_jobs_every_300ms() {
         try {
             const executeSearch = async () => {
-                console.log(`time: ${DateTime.now()}`)
                 try {
                     if (this.stop_process) return;
 

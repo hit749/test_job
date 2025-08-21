@@ -277,6 +277,7 @@ class AutoJobApply {
 
     async create_application(jobId, scheduleId, aws_waf_token, auth_token) {
         try {
+            if (this.stop_process) return;
             console.log(`jobId: ${jobId}, scheduleId: ${scheduleId}, aws_waf_token: ${aws_waf_token}, auth_token: ${auth_token}`)
             const url = "https://hiring.amazon.ca/application/api/candidate-application/ds/create-application/";
             const headers = {
@@ -307,8 +308,8 @@ class AutoJobApply {
             const response = await axios.post(url, payload, { headers });
             console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200) {
-                await this.sendEmail('Job Application Success', `Successfully applied for job ${jobId}`);
-                return true;
+                this.sendEmail('Job Application Success', `Successfully applied for job ${jobId} ${scheduleId}`);
+                return response?.data?.data?.applicationId;
             } else {
                 throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
             }
@@ -330,6 +331,72 @@ class AutoJobApply {
             }
 
             this.sendEmail('Job Application Failed', JSON.stringify(error.response?.data || error.message));
+            this.stop_process = true;
+            return false;
+        }
+    }
+
+    async updateApplication(applicationId, jobId, scheduleId, aws_waf_token, auth_token) {
+        try {
+            const url = 'https://hiring.amazon.ca/application/api/candidate-application/update-application';
+
+            const headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json, text/plain, */*',
+                'Authorization': auth_token,
+                'Sec-Fetch-Site': 'same-origin',
+                'Accept-Language': 'en-AU,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Sec-Fetch-Mode': 'cors',
+                'Origin': 'https://hiring.amazon.com',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15',
+                'Referer': `https://hiring.amazon.ca/application/ca/?CS=true&jobId=${jobId}&locale=en-US&scheduleId=${scheduleId}&ssoEnabled=1`,
+                'Sec-Fetch-Dest': 'empty',
+                'Cookie': `aws-waf-token=${aws_waf_token}`,
+                'bb-ui-version': 'bb-ui-v2',
+                'Priority': 'u=3, i',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+
+            const payload = {
+                applicationId: applicationId,
+                payload: {
+                    jobId: jobId,
+                    scheduleId: scheduleId
+                },
+                type: "job-confirm",
+                dspEnabled: true
+            };
+
+            console.log(`Updating application: ${applicationId}, job: ${jobId}, schedule: ${scheduleId}`);
+            console.log('Payload:', payload);
+
+            const response = await axios.put(url, payload, { headers });
+
+            console.log(`Function: update_application, applicationId: ${applicationId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`);
+
+            if (response.status === 200) {
+                this.sendEmail('Application Update Success', `Successfully updated application ${applicationId} for job ${jobId}`);
+                return response.data;
+            } else {
+                throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
+            }
+        } catch (error) {
+            console.error('Error updating application:', error.response?.data || error.message);
+
+            if (error.response) {
+                console.error("API Error:", {
+                    status: error.response.status,
+                    data: error.response.data,
+                    headers: error.response.headers,
+                });
+            } else if (error.request) {
+                console.error("Network Error:", error.message);
+            } else {
+                console.error("Runtime Error:", error.message);
+            }
+
+            this.sendEmail('Application Update Failed', JSON.stringify(error.response?.data || error.message));
             this.stop_process = true;
             return false;
         }
@@ -666,18 +733,19 @@ class AutoJobApply {
                     if (schedule_response.length > 0) {
                         const latestSchedule = schedule_response[0];
                         if (job.jobId && latestSchedule.scheduleId) {
-                            this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
-                                .then(data => console.log('Candidate data:', data))
-                                .catch(error => console.error('Failed to fetch candidate info:', error));
+                            // this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                            //     .then(data => console.log('Candidate data:', data))
+                            //     .catch(error => console.error('Failed to fetch candidate info:', error));
 
-                            const applicationSuccess = await this.create_application(
+                            const applicationId = await this.create_application(
                                 job.jobId,
                                 latestSchedule.scheduleId,
                                 this.aws_waf_token,
                                 this.auth_token
                             );
 
-                            if (applicationSuccess) {
+                            if (applicationId) {
+                                updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
                                 this.stopProcess();
                                 return;
                             }
@@ -710,96 +778,6 @@ class AutoJobApply {
             this.stopProcess();
         }
     }
-
-    // async find_jobs_every_300ms() {
-    //     try {
-    //         let lastExecutionTime = 0;
-
-    //         const executeSearch = async () => {
-    //             try {
-    //                 if (this.isInCooldown) return;
-
-    //                 const startTime = Date.now();
-    //                 const timeSinceLastCall = startTime - lastExecutionTime;
-    //                 const delayNeeded = Math.max(0, 300 - timeSinceLastCall);
-
-    //                 if (delayNeeded > 0) {
-    //                     await new Promise(resolve => setTimeout(resolve, delayNeeded));
-    //                 }
-
-    //                 if (!this.csrf_token) return;
-
-    //                 const jobs = await this.search_amazon_jobs(this.csrf_token);
-    //                 if (jobs.length === 0) {
-    //                     this.errorCount = 0;
-    //                     return;
-    //                 }
-
-    //                 const jobDetails = jobs.map(job => ({
-    //                     jobId: job.jobId,
-    //                     jobTitle: job.jobTitle,
-    //                     jobType: job.jobType,
-    //                     employmentType: job.employmentType,
-    //                     city: job.city,
-    //                     postalCode: job.postalCode,
-    //                     locationName: job.locationName,
-    //                     totalPayRateMin: job.totalPayRateMin,
-    //                     totalPayRateMax: job.totalPayRateMax,
-    //                     bonusPay: job.bonusPay,
-    //                     scheduleCount: job.scheduleCount
-    //                 }));
-    //                 console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
-    //                 this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error).catch(console.error);
-
-    //                 for (const job of jobs) {
-    //                     if (this.stop_process) break;
-
-    //                     const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
-    //                     console.log(`Schedele response length: ${schedule_response.length}`)
-    //                     if (schedule_response.length > 0) {
-    //                         const latestSchedule = schedule_response[0];
-    //                         if (job.jobId && latestSchedule.scheduleId) {
-    //                             const applicationSuccess = await this.create_application(
-    //                                 job.jobId,
-    //                                 latestSchedule.scheduleId,
-    //                                 this.aws_waf_token,
-    //                                 this.auth_token
-    //                             );
-
-    //                             if (applicationSuccess) {
-    //                                 this.stopProcess();
-    //                                 return;
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-
-    //                 this.errorCount = 0;
-    //             } catch (error) {
-    //                 this.errorCount++;
-    //                 this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`).catch(console.error);
-
-    //                 if (this.errorCount >= this.maxErrorCount) {
-    //                     if (!this.hasRestartedAfterCooldown) {
-    //                         await this.handleCooldown();
-    //                     } else {
-    //                         this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors').catch(console.error);
-    //                         this.stopProcess();
-    //                     }
-    //                 }
-    //             } finally {
-    //                 lastExecutionTime = Date.now();
-    //             }
-    //         };
-
-    //         this.jobSearchInterval = setInterval(executeSearch, 300);
-    //         await executeSearch();
-    //         await new Promise(() => { });
-    //     } catch (error) {
-    //         this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
-    //         this.stopProcess();
-    //     }
-    // }
 
 
     stopProcess() {

@@ -289,10 +289,11 @@ class AutoJobApply {
                 "Sec-Fetch-Mode": "cors",
                 "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": `https://hiring.amazon.com/application/us/?CS=true&jobId=${jobId}&locale=en-CA&scheduleId=${scheduleId}&ssoEnabled=1`,
+                "Referer": `https://hiring.amazon.com/application/`,
                 "Sec-Fetch-Dest": "empty",
                 "Cookie": `aws-waf-token=${aws_waf_token}`,
                 "bb-ui-version": "bb-ui-v2",
+                'X-Requested-With': 'XMLHttpRequest',
                 "Priority": "u=3, i"
             };
             const payload = {
@@ -331,6 +332,39 @@ class AutoJobApply {
             this.sendEmail('Job Application Failed', JSON.stringify(error.response?.data || error.message));
             this.stop_process = true;
             return false;
+        }
+    }
+
+    async getCandidateInfo(auth_token, aws_waf_token, jobId, scheduleId) {
+        const config = {
+            method: 'get',
+            url: 'https://hiring.amazon.ca/application/api/candidate-application/candidate',
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Authorization': `${auth_token}`,
+                'Sec-Fetch-Site': 'same-origin',
+                'Accept-Language': 'en-AU,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Sec-Fetch-Mode': 'cors',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15',
+                'Referer': `https://hiring.amazon.ca/application/ca/?CS=true&jobId=${jobId}&locale=en-CA&scheduleId=${scheduleId}&ssoEnabled=1`,
+                'Sec-Fetch-Dest': 'empty',
+                'Cookie': `aws-waf-token=${aws_waf_token}`,
+                'bb-ui-version': 'bb-ui-v2',
+                'Priority': 'u=3, I'
+            }
+        };
+
+        try {
+            const response = await axios(config);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching candidate info:', error.message);
+            if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response data:', error.response.data);
+            }
+            throw error;
         }
     }
 
@@ -595,7 +629,6 @@ class AutoJobApply {
         try {
             const executeSearch = async () => {
                 try {
-                    // console.log`Time: ${DateTime.now()}`
                     if (this.stop_process) return;
 
                     if (this.isInCooldown) return;
@@ -633,6 +666,10 @@ class AutoJobApply {
                     if (schedule_response.length > 0) {
                         const latestSchedule = schedule_response[0];
                         if (job.jobId && latestSchedule.scheduleId) {
+                            this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                                .then(data => console.log('Candidate data:', data))
+                                .catch(error => console.error('Failed to fetch candidate info:', error));
+
                             const applicationSuccess = await this.create_application(
                                 job.jobId,
                                 latestSchedule.scheduleId,

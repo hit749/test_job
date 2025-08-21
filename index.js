@@ -278,7 +278,7 @@ class AutoJobApply {
     async create_application(jobId, scheduleId, aws_waf_token, auth_token) {
         try {
             console.log(`jobId: ${jobId}, scheduleId: ${scheduleId}, aws_waf_token: ${aws_waf_token}, auth_token: ${auth_token}`)
-            const url = "https://hiring.amazon.com/application/api/candidate-application/ds/create-application/";
+            const url = "https://hiring.amazon.ca/application/api/candidate-application/ds/create-application/";
             const headers = {
                 "Content-Type": "application/json;charset=utf-8",
                 "Accept": "application/json, text/plain, */*",
@@ -289,7 +289,7 @@ class AutoJobApply {
                 "Sec-Fetch-Mode": "cors",
                 "Origin": "https://hiring.amazon.com",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
-                "Referer": `https://hiring.amazon.com/application/`,
+                "Referer": `https://hiring.amazon.ca/application/ca/?CS=true&jobId=${jobId}&locale=en-CA&scheduleId=${scheduleId}&ssoEnabled=1`,
                 "Sec-Fetch-Dest": "empty",
                 "Cookie": `aws-waf-token=${aws_waf_token}`,
                 "bb-ui-version": "bb-ui-v2",

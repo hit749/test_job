@@ -745,7 +745,7 @@ class AutoJobApply {
                             );
 
                             if (applicationId) {
-                                updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
+                                this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
                                 this.stopProcess();
                                 return;
                             }

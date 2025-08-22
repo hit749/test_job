@@ -707,6 +707,12 @@ class AutoJobApply {
                         this.errorCount = 0;
                         return;
                     }
+                    
+                    // Filter jobs where locationName contains "ON" or "CAN"
+                    const filteredJobs = jobs.filter(job =>
+                        job.locationName &&
+                        (job.locationName.includes('ON') || job.locationName.includes('CAN'))
+                    );
 
                     // const jobDetails = jobs.map(job => ({
                     //     jobId: job.jobId,
@@ -724,7 +730,7 @@ class AutoJobApply {
                     // console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
                     // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
 
-                    const job = jobs[0]
+                    const job = filteredJobs[0]
                     // for (const job of jobs) {
                     if (this.stop_process) return;
 

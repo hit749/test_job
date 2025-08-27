@@ -9,8 +9,8 @@ const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {
-        this.email = "sutariyahit7749@gmail.com";
-        this.pin = "778899";
+        this.email = "alkesh1503@gmail.com";
+        this.pin = "111996";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";
@@ -707,27 +707,24 @@ class AutoJobApply {
                         this.errorCount = 0;
                         return;
                     }
+
+                    const jobDetails = jobs.map(job => ({
+                        jobId: job.jobId,
+                        jobTitle: job.jobTitle,
+                        city: job.city,
+                        postalCode: job.postalCode,
+                        locationName: job.locationName,
+                        totalPayRateMin: job.totalPayRateMin,
+                        totalPayRateMax: job.totalPayRateMax
+                    }));
+                    console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
                     
                     // Filter jobs where locationName contains "ON" or "CAN"
                     const filteredJobs = jobs.filter(job =>
                         job.locationName &&
-                        (job.locationName.includes('ON') || job.locationName.includes('CAN'))
+                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton') || job.locationName.toLowerCase().includes('kitchener') || job.locationName.toLowerCase().includes('cambridge'))
                     );
 
-                    // const jobDetails = jobs.map(job => ({
-                    //     jobId: job.jobId,
-                    //     jobTitle: job.jobTitle,
-                    //     jobType: job.jobType,
-                    //     employmentType: job.employmentType,
-                    //     city: job.city,
-                    //     postalCode: job.postalCode,
-                    //     locationName: job.locationName,
-                    //     totalPayRateMin: job.totalPayRateMin,
-                    //     totalPayRateMax: job.totalPayRateMax,
-                    //     bonusPay: job.bonusPay,
-                    //     scheduleCount: job.scheduleCount
-                    // }));
-                    // console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
                     // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
 
                     const job = filteredJobs[0]
@@ -840,7 +837,7 @@ const PORT = 3000;
 
 const config = {
     imap: {
-        user: "sutariyahit7749@gmail.com",
+        user: "alkesh1503@gmail.com",
         password: "hldc nqby dhsi tych",
         host: "imap.gmail.com",
         port: 993,

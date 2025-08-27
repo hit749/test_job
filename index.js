@@ -722,7 +722,7 @@ class AutoJobApply {
                     // Filter jobs where locationName contains "ON" or "CAN"
                     const filteredJobs = jobs.filter(job =>
                         job.locationName &&
-                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton') || job.locationName.toLowerCase().includes('kitchener') || job.locationName.toLowerCase().includes('cambridge'))
+                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('iiiiiii') || job.locationName.toLowerCase().includes('kitchener') || job.locationName.toLowerCase().includes('iiiiiiiii'))
                     );
 
                     // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);

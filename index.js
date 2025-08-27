@@ -714,7 +714,6 @@ class AutoJobApply {
                     }
 
                     const jobDetails = jobs.map(job => ({
-                        jobId: job.jobId,
                         jobTitle: job.jobTitle,
                         city: job.city,
                         postalCode: job.postalCode,
@@ -722,7 +721,7 @@ class AutoJobApply {
                         totalPayRateMin: job.totalPayRateMin,
                         totalPayRateMax: job.totalPayRateMax
                     }));
-                    console.log(`Job Details: ${JSON.stringify(jobDetails, null, 2)}`)
+                    console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
                     
                     // Filter jobs where locationName contains "ON" or "CAN"
                     const filteredJobs = jobs.filter(job =>

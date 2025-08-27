@@ -838,7 +838,7 @@ const PORT = 3000;
 const config = {
     imap: {
         user: "alkesh1503@gmail.com",
-        password: "hldc nqby dhsi tych",
+        password: "Alkesh@011",
         host: "imap.gmail.com",
         port: 993,
         tls: true,

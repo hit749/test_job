@@ -9,8 +9,8 @@ const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {
-        this.email = "alkesh1503@gmail.com";
-        this.pin = "111996";
+        this.email = "tanvsingh009@gmail.com";
+        this.pin = "431312";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";
@@ -837,8 +837,8 @@ const PORT = 3000;
 
 const config = {
     imap: {
-        user: "alkesh1503@gmail.com",
-        password: "Alkesh@011",
+        user: "tanvsingh009@gmail.com",
+        password: "fyke lsjl ixyr ctnv",
         host: "imap.gmail.com",
         port: 993,
         tls: true,

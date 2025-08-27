@@ -549,6 +549,7 @@ class AutoJobApply {
             return [];
         } catch (error) {
             this.sendEmail('Job Search Error', error.message).catch(console.error);
+            this.sleep(5*60*1000)
             return [];
         }
     }
@@ -692,6 +693,10 @@ class AutoJobApply {
         }, this.cooldownPeriod);
     }
 
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     async find_jobs_every_300ms() {
         try {
             const executeSearch = async () => {
@@ -722,11 +727,9 @@ class AutoJobApply {
                     // Filter jobs where locationName contains "ON" or "CAN"
                     const filteredJobs = jobs.filter(job =>
                         job.locationName &&
-                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('iiiiiii') || job.locationName.toLowerCase().includes('kitchener') || job.locationName.toLowerCase().includes('iiiiiiiii'))
-                    );
-
+                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('kitchener'))
                     // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
-
+                    )
                     const job = filteredJobs[0]
                     // for (const job of jobs) {
                     if (this.stop_process) return;
@@ -774,7 +777,7 @@ class AutoJobApply {
 
             // Run immediately and then every 10 seconds
             await executeSearch();
-            this.jobSearchInterval = setInterval(executeSearch, 50);
+            this.jobSearchInterval = setInterval(executeSearch, 100);
 
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);

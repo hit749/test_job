@@ -235,7 +235,7 @@ class AutoJobApply {
         }
     }
 
-    async confirm_amazon_otp(otp, session, csrf_token, aws_waf_token, attempt=1) {
+    async confirm_amazon_otp(otp, session, csrf_token, aws_waf_token, attempt = 1) {
         try {
             const url = "https://auth.hiring.amazon.com/api/authentication/confirm-otp?countryCode=CA";
             const headers = {
@@ -711,7 +711,7 @@ class AutoJobApply {
     async find_jobs_every_300ms() {
         try {
             const executeSearch = async () => {
-                console.log(`${DateTime.now()} Process running....`)
+                // console.log(`${DateTime.now()} Process running....`)
                 try {
                     if (this.stop_process) return;
 
@@ -740,6 +740,12 @@ class AutoJobApply {
                             (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('kitchener'))
                             // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
                         )
+
+                        if (filteredJobs.length === 0) {
+                            this.errorCount = 0;
+                            return;
+                        }
+
                         const job = filteredJobs[0]
                         // for (const job of jobs) {
                         if (this.stop_process) return;
@@ -787,7 +793,7 @@ class AutoJobApply {
 
             // Run immediately and then every 10 seconds
             await executeSearch();
-            this.jobSearchInterval = setInterval(executeSearch, 100);
+            this.jobSearchInterval = setInterval(executeSearch, 50);
 
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);

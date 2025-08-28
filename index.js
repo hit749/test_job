@@ -349,6 +349,8 @@ class AutoJobApply {
 
     async updateApplication(applicationId, jobId, scheduleId, aws_waf_token, auth_token) {
         try {
+            if (this.stop_process) return;
+            
             const url = 'https://hiring.amazon.ca/application/api/candidate-application/update-application';
 
             const headers = {

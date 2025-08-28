@@ -349,8 +349,6 @@ class AutoJobApply {
 
     async updateApplication(applicationId, jobId, scheduleId, aws_waf_token, auth_token) {
         try {
-            if (this.stop_process) return;
-            
             const url = 'https://hiring.amazon.ca/application/api/candidate-application/update-application';
 
             const headers = {
@@ -738,7 +736,8 @@ class AutoJobApply {
 
                         // Filter jobs where locationName contains "ON" or "CAN"
                         const filteredJobs = jobs.filter(job =>
-                            job.locationName && job.locationName.toLowerCase().includes('brampton')
+                            job.locationName &&
+                            (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton'))
                             // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
                         )
 

@@ -235,7 +235,7 @@ class AutoJobApply {
         }
     }
 
-    async confirm_amazon_otp(otp, session, csrf_token, aws_waf_token) {
+    async confirm_amazon_otp(otp, session, csrf_token, aws_waf_token, attempt=1) {
         try {
             const url = "https://auth.hiring.amazon.com/api/authentication/confirm-otp?countryCode=CA";
             const headers = {
@@ -269,9 +269,20 @@ class AutoJobApply {
             }
             return false;
         } catch (error) {
+            console.log(`OTP confirmation failed (attempt ${attempt}).`);
             this.sendEmail('OTP Confirmation Error', error.message).catch(console.error);
-            this.stop_process = true;
-            return false;
+
+            if (attempt >= 2) {
+                console.log("Max retry attempts reached. Stopping process.");
+                this.stop_process = true;
+                return false;
+            }
+
+            console.log("Retrying in 2 minutes...");
+            await new Promise(resolve => setTimeout(resolve, 3 * 60 * 1000));
+
+            // retry with incremented attempt counter
+            return this.confirm_amazon_otp(otp, session, csrf_token, aws_waf_token, attempt + 1);
         }
     }
 
@@ -549,7 +560,7 @@ class AutoJobApply {
             return [];
         } catch (error) {
             this.sendEmail('Job Search Error', error.message).catch(console.error);
-            this.sleep(5*60*1000)
+            this.sleep(5 * 60 * 1000)
             return [];
         }
     }
@@ -700,6 +711,7 @@ class AutoJobApply {
     async find_jobs_every_300ms() {
         try {
             const executeSearch = async () => {
+                console.log(`${DateTime.now()} Process running....`)
                 try {
                     if (this.stop_process) return;
 
@@ -711,54 +723,53 @@ class AutoJobApply {
                     if (jobs.length === 0) {
                         this.errorCount = 0;
                         return;
-                    }
+                    } else {
+                        const jobDetails = jobs.map(job => ({
+                            jobTitle: job.jobTitle,
+                            city: job.city,
+                            postalCode: job.postalCode,
+                            locationName: job.locationName,
+                            totalPayRateMin: job.totalPayRateMin,
+                            totalPayRateMax: job.totalPayRateMax
+                        }));
+                        console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
 
-                    const jobDetails = jobs.map(job => ({
-                        jobTitle: job.jobTitle,
-                        city: job.city,
-                        postalCode: job.postalCode,
-                        locationName: job.locationName,
-                        totalPayRateMin: job.totalPayRateMin,
-                        totalPayRateMax: job.totalPayRateMax
-                    }));
-                    console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
-                    
-                    // Filter jobs where locationName contains "ON" or "CAN"
-                    const filteredJobs = jobs.filter(job =>
-                        job.locationName &&
-                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('kitchener'))
-                    // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
-                    )
-                    const job = filteredJobs[0]
-                    // for (const job of jobs) {
-                    if (this.stop_process) return;
+                        // Filter jobs where locationName contains "ON" or "CAN"
+                        const filteredJobs = jobs.filter(job =>
+                            job.locationName &&
+                            (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('kitchener'))
+                            // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
+                        )
+                        const job = filteredJobs[0]
+                        // for (const job of jobs) {
+                        if (this.stop_process) return;
 
-                    const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
-                    // console.log(`Schedule response length: ${schedule_response.length}`)
-                    if (schedule_response.length > 0) {
-                        const latestSchedule = schedule_response[0];
-                        if (job.jobId && latestSchedule.scheduleId) {
-                            // this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
-                            //     .then(data => console.log('Candidate data:', data))
-                            //     .catch(error => console.error('Failed to fetch candidate info:', error));
+                        const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+                        // console.log(`Schedule response length: ${schedule_response.length}`)
+                        if (schedule_response.length > 0) {
+                            const latestSchedule = schedule_response[0];
+                            if (job.jobId && latestSchedule.scheduleId) {
+                                // this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                                //     .then(data => console.log('Candidate data:', data))
+                                //     .catch(error => console.error('Failed to fetch candidate info:', error));
 
-                            const applicationId = await this.create_application(
-                                job.jobId,
-                                latestSchedule.scheduleId,
-                                this.aws_waf_token,
-                                this.auth_token
-                            );
+                                const applicationId = await this.create_application(
+                                    job.jobId,
+                                    latestSchedule.scheduleId,
+                                    this.aws_waf_token,
+                                    this.auth_token
+                                );
 
-                            if (applicationId) {
-                                this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
-                                this.stopProcess();
-                                return;
+                                if (applicationId) {
+                                    this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
+                                    this.stopProcess();
+                                    return;
+                                }
                             }
                         }
-                    }
-                    // }
 
-                    this.errorCount = 0;
+                        this.errorCount = 0;
+                    }
                 } catch (error) {
                     this.errorCount++;
                     this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`).catch(console.error);

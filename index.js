@@ -755,9 +755,9 @@ class AutoJobApply {
                         if (schedule_response.length > 0) {
                             const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
-                                // this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
-                                //     .then(data => console.log('Candidate data:', data))
-                                //     .catch(error => console.error('Failed to fetch candidate info:', error));
+                                this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                                     .then(data => console.log('Candidate data:', data))
+                                     .catch(error => console.error('Failed to fetch candidate info:', error));
 
                                 const applicationId = await this.create_application(
                                     job.jobId,

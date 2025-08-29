@@ -289,7 +289,7 @@ class AutoJobApply {
     async create_application(jobId, scheduleId, aws_waf_token, auth_token) {
         try {
             if (this.stop_process) return;
-            console.log(`jobId: ${jobId}, scheduleId: ${scheduleId}, aws_waf_token: ${aws_waf_token}, auth_token: ${auth_token}`)
+            
             const url = "https://hiring.amazon.ca/application/api/candidate-application/ds/create-application/";
             const headers = {
                 "Content-Type": "application/json;charset=utf-8",
@@ -315,7 +315,6 @@ class AutoJobApply {
                 "candidateId": this.candidateId,
                 "activeApplicationCheckEnabled": true
             };
-            console.log(payload)
             const response = await axios.post(url, payload, { headers });
             console.log(`Function: create_application,  jobId: ${jobId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`)
             if (response.status === 200) {
@@ -325,7 +324,6 @@ class AutoJobApply {
                 throw new Error(`Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`);
             }
         } catch (error) {
-            console.log(error.response)
             if (error.response) {
                 // API returned 4xx/5xx (HTTP error)
                 console.error("API Error:", {
@@ -349,6 +347,7 @@ class AutoJobApply {
 
     async updateApplication(applicationId, jobId, scheduleId, aws_waf_token, auth_token) {
         try {
+            if (this.stop_process) return;
             const url = 'https://hiring.amazon.ca/application/api/candidate-application/update-application';
 
             const headers = {
@@ -380,8 +379,7 @@ class AutoJobApply {
             };
 
             console.log(`Updating application: ${applicationId}, job: ${jobId}, schedule: ${scheduleId}`);
-            console.log('Payload:', payload);
-
+            
             const response = await axios.put(url, payload, { headers });
 
             console.log(`Function: update_application, applicationId: ${applicationId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`);
@@ -710,6 +708,8 @@ class AutoJobApply {
 
     async find_jobs_every_300ms() {
         try {
+            if (this.stop_process) return;
+
             const executeSearch = async () => {
                 // console.log(`${DateTime.now()} Process running....`)
                 try {
@@ -767,8 +767,8 @@ class AutoJobApply {
                                 );
 
                                 if (applicationId) {
-                                    this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
-                                    this.stopProcess();
+                                    await this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
+                                    await this.stopProcess();
                                     return;
                                 }
                             }
@@ -791,7 +791,6 @@ class AutoJobApply {
                 }
             };
 
-            // Run immediately and then every 10 seconds
             await executeSearch();
             this.jobSearchInterval = setInterval(executeSearch, 50);
 
@@ -802,7 +801,7 @@ class AutoJobApply {
     }
 
 
-    stopProcess() {
+    async stopProcess() {
         this.stop_process = true;
         if (this.jobSearchInterval) clearInterval(this.jobSearchInterval);
         if (this.tokenRefreshInterval) clearInterval(this.tokenRefreshInterval);

@@ -714,7 +714,6 @@ class AutoJobApply {
             if (this.stop_process) return;
 
             const executeSearch = async () => {
-                console.log(`TIME: ${DateTime.now()}`)
                 try {
                     if (this.stop_process) return;
 

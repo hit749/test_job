@@ -735,7 +735,7 @@ class AutoJobApply {
                             totalPayRateMax: job.totalPayRateMax
                         }));
                         console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
-
+                        console.log(`${DateTime.now()}   ::   Job Details found`)
 
                         const filteredJobs = jobs.filter(job =>
                         job.locationName &&
@@ -748,29 +748,35 @@ class AutoJobApply {
                         }
 
                         const job = filteredJobs[0]
+                        console.log(`${DateTime.now()}   ::   Job Found`)
                         if (this.stop_process) return;
-
+                        console.log(`${DateTime.now()}   ::   Before shift application`)
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
+                        console.log(`${DateTime.now()}   ::   After shift application`)
                         if (schedule_response.length > 0 && !this.isApplying) {
                             const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
                                 this.isApplying = true;
 
                                 try {
-                                    this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
-                                        .then(data => console.log('Candidate data:', data))
-                                        .catch(error => console.error('Failed to fetch candidate info:', error));
-
+                                    // this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                                    //     .then(data => console.log('Candidate data:', data))
+                                    //     .catch(error => console.error('Failed to fetch candidate info:', error));
+                                    
+                                    console.log(`${DateTime.now()}   ::   Before create application`)
                                     const applicationId = await this.create_application(
                                         job.jobId,
                                         latestSchedule.scheduleId,
                                         this.aws_waf_token,
                                         this.auth_token
                                     );
-
+                                    console.log(`${DateTime.now()}   ::   After create application`)
                                     if (applicationId) {
+                                        console.log(`${DateTime.now()}   ::   Before update application`)
                                         await this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
+                                        console.log(`${DateTime.now()}   ::   After update application`)
                                         await this.stopProcess();
+                                        console.log(`${DateTime.now()}   ::   Process complete`)
                                         return;
                                     }
                                 } catch (err) {
@@ -799,7 +805,7 @@ class AutoJobApply {
             };
 
             await executeSearch();
-            this.jobSearchInterval = setInterval(executeSearch, 50);
+            this.jobSearchInterval = setInterval(executeSearch, 200);
 
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);

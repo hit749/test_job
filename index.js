@@ -9,8 +9,10 @@ const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {
-        this.email = "tanvsingh009@gmail.com";
-        this.pin = "431312";
+        // this.email = "tanvsingh009@gmail.com";
+        // this.pin = "431312";
+        this.email = "sutariyahit7749@gmail.com";
+        this.pin = "787878";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";
@@ -21,8 +23,9 @@ class AutoJobApply {
         this.tokenRefreshInterval = null;
         this.errorCount = 0;
         this.maxErrorCount = 5;
-        this.cooldownPeriod = 15 * 60 * 1000;
+        this.cooldownPeriod = 5 * 60 * 1000;
         this.isInCooldown = false;
+        this.isApplying = false
         this.hasRestartedAfterCooldown = false;
         this.axiosInstance = axios.create({
             timeout: 5000,
@@ -289,7 +292,7 @@ class AutoJobApply {
     async create_application(jobId, scheduleId, aws_waf_token, auth_token) {
         try {
             if (this.stop_process) return;
-            
+
             const url = "https://hiring.amazon.ca/application/api/candidate-application/ds/create-application/";
             const headers = {
                 "Content-Type": "application/json;charset=utf-8",
@@ -379,7 +382,7 @@ class AutoJobApply {
             };
 
             console.log(`Updating application: ${applicationId}, job: ${jobId}, schedule: ${scheduleId}`);
-            
+
             const response = await axios.put(url, payload, { headers });
 
             console.log(`Function: update_application, applicationId: ${applicationId}, response_status: ${response.status}, response: ${JSON.stringify(response.data, null, 2)}`);
@@ -557,9 +560,12 @@ class AutoJobApply {
             }
             return [];
         } catch (error) {
-            this.sendEmail('Job Search Error', error.message).catch(console.error);
-            this.sleep(5 * 60 * 1000)
-            return [];
+            if (!this.hasRestartedAfterCooldown) {
+                await this.handleCooldown();
+            } else {
+                this.sendEmail('Job Search Error', error.message).catch(console.error);
+                return [];
+            }
         }
     }
 
@@ -690,20 +696,16 @@ class AutoJobApply {
     async handleCooldown() {
         this.isInCooldown = true;
         this.stopProcess();
-        this.sendEmail('Process Paused', 'Process paused for 15 minutes due to errors').catch(console.error);
+        this.sendEmail('Process Paused', 'Process paused for 5 minutes due to errors').catch(console.error);
 
         setTimeout(async () => {
             this.isInCooldown = false;
             this.hasRestartedAfterCooldown = true;
             this.errorCount = 0;
-            this.sendEmail('Process Restarted', 'Process restarted after 15 minute cooldown').catch(console.error);
+            this.sendEmail('Process Restarted', 'Process restarted after 5 minute cooldown').catch(console.error);
             this.startTokenRefresh();
             this.find_jobs_every_300ms();
         }, this.cooldownPeriod);
-    }
-
-    async sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async find_jobs_every_300ms() {
@@ -711,7 +713,6 @@ class AutoJobApply {
             if (this.stop_process) return;
 
             const executeSearch = async () => {
-                // console.log(`${DateTime.now()} Process running....`)
                 try {
                     if (this.stop_process) return;
 
@@ -734,42 +735,47 @@ class AutoJobApply {
                         }));
                         console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
 
-                        // Filter jobs where locationName contains "ON" or "CAN"
-                        const filteredJobs = jobs.filter(job =>
-                            job.locationName &&
-                            (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton'))
-                            // this.sendEmail('Jobs Found', JSON.stringify(jobDetails, null, 2)).catch(console.error);
-                        )
 
-                        if (filteredJobs.length === 0) {
-                            this.errorCount = 0;
-                            return;
-                        }
+                        // const filteredJobs = jobs.filter(job =>
+                        // job.locationName &&
+                        // (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton'))
+                        // )
 
-                        const job = filteredJobs[0]
-                        // for (const job of jobs) {
+                        // if (filteredJobs.length === 0) {
+                        //     this.errorCount = 0;
+                        //     return;
+                        // }
+
+                        const job = jobs[0]
                         if (this.stop_process) return;
 
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
-                        // console.log(`Schedule response length: ${schedule_response.length}`)
-                        if (schedule_response.length > 0) {
+                        if (schedule_response.length > 0 && !this.isApplying) {
                             const latestSchedule = schedule_response[0];
                             if (job.jobId && latestSchedule.scheduleId) {
-                                this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
-                                     .then(data => console.log('Candidate data:', data))
-                                     .catch(error => console.error('Failed to fetch candidate info:', error));
+                                this.isApplying = true;
 
-                                const applicationId = await this.create_application(
-                                    job.jobId,
-                                    latestSchedule.scheduleId,
-                                    this.aws_waf_token,
-                                    this.auth_token
-                                );
+                                try {
+                                    this.getCandidateInfo(this.auth_token, this.aws_waf_token, job.jobId, latestSchedule.scheduleId)
+                                        .then(data => console.log('Candidate data:', data))
+                                        .catch(error => console.error('Failed to fetch candidate info:', error));
 
-                                if (applicationId) {
-                                    await this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
-                                    await this.stopProcess();
-                                    return;
+                                    const applicationId = await this.create_application(
+                                        job.jobId,
+                                        latestSchedule.scheduleId,
+                                        this.aws_waf_token,
+                                        this.auth_token
+                                    );
+
+                                    if (applicationId) {
+                                        await this.updateApplication(applicationId, job.jobId, latestSchedule.scheduleId, this.aws_waf_token, this.auth_token)
+                                        await this.stopProcess();
+                                        return;
+                                    }
+                                } catch (err) {
+                                    console.error("Application process failed:", err);
+                                } finally {
+                                    this.isApplying = false; // unlock if needed
                                 }
                             }
                         }
@@ -781,7 +787,7 @@ class AutoJobApply {
                     this.sendEmail('Job Search Attempt Error', `Attempt ${this.errorCount}: ${error.message}`).catch(console.error);
 
                     if (this.errorCount >= this.maxErrorCount) {
-                        if (!this.hasRestartedAfterCooldown) {
+                        if (!this.isInCooldown) {
                             await this.handleCooldown();
                         } else {
                             this.sendEmail('Process Stopped', 'Process stopped permanently due to repeated errors').catch(console.error);
@@ -855,8 +861,10 @@ const PORT = 3000;
 
 const config = {
     imap: {
-        user: "tanvsingh009@gmail.com",
-        password: "fyke lsjl ixyr ctnv",
+        // user: "tanvsingh009@gmail.com",
+        // password: "fyke lsjl ixyr ctnv",
+        user: "sutariyahit7749@gmail.com",
+        password: "hldc nqby dhsi tych",
         host: "imap.gmail.com",
         port: 993,
         tls: true,

@@ -9,10 +9,10 @@ const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {
-        this.email = "tanvsingh009@gmail.com";
-        this.pin = "431312";
-        // this.email = "sutariyahit7749@gmail.com";
-        // this.pin = "778899";
+        // this.email = "tanvsingh009@gmail.com";
+        // this.pin = "431312";
+        this.email = "sutariyahit7749@gmail.com";
+        this.pin = "778899";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";
@@ -562,6 +562,7 @@ class AutoJobApply {
         } catch (error) {
             if (!this.hasRestartedAfterCooldown) {
                 await this.handleCooldown();
+                return [];
             } else {
                 this.sendEmail('Job Search Error', error.message).catch(console.error);
                 return [];
@@ -713,6 +714,7 @@ class AutoJobApply {
             if (this.stop_process) return;
 
             const executeSearch = async () => {
+                console.log(`TIME: ${DateTime.now()}`)
                 try {
                     if (this.stop_process) return;
 
@@ -798,7 +800,7 @@ class AutoJobApply {
             };
 
             await executeSearch();
-            this.jobSearchInterval = setInterval(executeSearch, 50);
+            this.jobSearchInterval = setInterval(executeSearch, 10);
 
         } catch (error) {
             this.sendEmail('Fatal Job Search Error', error.message).catch(console.error);
@@ -861,10 +863,10 @@ const PORT = 3000;
 
 const config = {
     imap: {
-        user: "tanvsingh009@gmail.com",
-        password: "fyke lsjl ixyr ctnv",
-        // user: "sutariyahit7749@gmail.com",
-        // password: "hldc nqby dhsi tych",
+        // user: "tanvsingh009@gmail.com",
+        // password: "fyke lsjl ixyr ctnv",
+        user: "sutariyahit7749@gmail.com",
+        password: "hldc nqby dhsi tych",
         host: "imap.gmail.com",
         port: 993,
         tls: true,

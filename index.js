@@ -12,7 +12,7 @@ class AutoJobApply {
         // this.email = "tanvsingh009@gmail.com";
         // this.pin = "431312";
         this.email = "sutariyahit7749@gmail.com";
-        this.pin = "787878";
+        this.pin = "778899";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";

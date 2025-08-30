@@ -9,10 +9,10 @@ const nodemailer = require('nodemailer');
 
 class AutoJobApply {
     constructor() {
-        // this.email = "tanvsingh009@gmail.com";
-        // this.pin = "431312";
-        this.email = "sutariyahit7749@gmail.com";
-        this.pin = "778899";
+        this.email = "tanvsingh009@gmail.com";
+        this.pin = "431312";
+        // this.email = "sutariyahit7749@gmail.com";
+        // this.pin = "778899";
         this.candidateId = "a5903d60-4798-11f0-ad5c-53d600a1f3dc";
         this.csrf_token = "";
         this.aws_waf_token = "";
@@ -736,17 +736,17 @@ class AutoJobApply {
                         console.log(`Job Details:: ${JSON.stringify(jobDetails, null, 2)}`)
 
 
-                        // const filteredJobs = jobs.filter(job =>
-                        // job.locationName &&
-                        // (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton'))
-                        // )
+                        const filteredJobs = jobs.filter(job =>
+                        job.locationName &&
+                        (job.locationName.toLowerCase().includes('mississauga') || job.locationName.toLowerCase().includes('brampton') || job.locationName.toLowerCase().includes('hamilton'))
+                        )
 
-                        // if (filteredJobs.length === 0) {
-                        //     this.errorCount = 0;
-                        //     return;
-                        // }
+                        if (filteredJobs.length === 0) {
+                            this.errorCount = 0;
+                            return;
+                        }
 
-                        const job = jobs[0]
+                        const job = filteredJobs[0]
                         if (this.stop_process) return;
 
                         const schedule_response = await this.search_schedule_cards(this.csrf_token, job.jobId);
@@ -861,10 +861,10 @@ const PORT = 3000;
 
 const config = {
     imap: {
-        // user: "tanvsingh009@gmail.com",
-        // password: "fyke lsjl ixyr ctnv",
-        user: "sutariyahit7749@gmail.com",
-        password: "hldc nqby dhsi tych",
+        user: "tanvsingh009@gmail.com",
+        password: "fyke lsjl ixyr ctnv",
+        // user: "sutariyahit7749@gmail.com",
+        // password: "hldc nqby dhsi tych",
         host: "imap.gmail.com",
         port: 993,
         tls: true,
@@ -895,6 +895,7 @@ async function fetchLatestOtp(fromEmail) {
         const latestMessage = messages[messages.length - 1];
         const parsed = await simpleParser(latestMessage.parts.filter(part => part.which === 'TEXT')[0].body);
         const otp = extractOtp(parsed.text || parsed.html || '');
+        console.log(`OTP:  ${otp}`)
         if (otp) {
             return {
                 otp,
